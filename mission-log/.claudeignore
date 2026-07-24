@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+vendor/
+
+# Entornos y Credenciales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Laravel / PHP específicos
+bootstrap/cache/*
+storage/*
+public/build/
+public/hot
+public/storage
+.phpunit.result.cache
+
+# Bases de datos locales
+*.sqlite
+
+# Logs y Temporales
+*.log
+.eslintcache
+.stylelintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
