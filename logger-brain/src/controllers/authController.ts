@@ -45,6 +45,8 @@ export async function login(req: Request, res: Response) {
   const { email, password } = req.body ?? {};
 
   const user = await getUserByEmail(email);
+  console.log(email, user);
+  
   if (!user) {
     throw new InvalidCredentialsError401()
   }

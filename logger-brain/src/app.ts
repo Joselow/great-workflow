@@ -31,8 +31,18 @@ export function createApp() {
     }),
   );
 
-  app.use("/api", router);
-
+  app.use("/api/v1", router);
+  
+  app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Flow Work api',
+        version: '1.0.0',
+        endpoints: {
+            api: '/api/v1',
+        },
+    });
+});
   app.use(notFound);
   app.use(errorHandler);
 

@@ -1,6 +1,9 @@
 import { ZodError, z } from "zod";
 
-export const formatValidationErrors = (error: ZodError) => {
-    const errorFormatted = z.flattenError(error).fieldErrors
-    return errorFormatted
+export const formatValidationErrors = (error: ZodError): Record<string, string[]> | string => {
+    const { fieldErrors, formErrors } = z.flattenError(error)
+    
+    return Object.keys(fieldErrors).length > 0 
+                        ? fieldErrors 
+                        : formErrors[0]
 };

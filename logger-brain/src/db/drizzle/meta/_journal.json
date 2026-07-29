@@ -8,6 +8,20 @@
       "when": 1784859664431,
       "tag": "0000_slow_husk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785282108768,
+      "tag": "0001_clear_iron_lad",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785287128829,
+      "tag": "0002_simple_bug",
+      "breakpoints": true
     }
   ]
 }

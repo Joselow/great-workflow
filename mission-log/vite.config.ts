@@ -9,7 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": "/src",
-      "@commons": "/src/components/commons",
+      "@commons": "/src/commons",
     },
   },
 

@@ -1,0 +1,1 @@
+ALTER TABLE "logs" ALTER COLUMN "type_meeting_link" SET DATA TYPE char(8);

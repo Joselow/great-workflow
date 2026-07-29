@@ -9,7 +9,7 @@ export const success = ( res: Response, status: number, data: object ) =>{
 }
 
 export const simpleSuccess = ( res: Response, status: number, data: object ) =>{
-  res.status(status).json(data);
+  res.status(status ?? 200).json(data);
 }
 
 export const error = (

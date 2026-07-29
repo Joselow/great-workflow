@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { users, type User, NewUser } from '../db/schemas/user.js';
+import { users, type User, NewUser } from '../db/schemas/users.js';
 
 
 // Obtener un usuario por ID
