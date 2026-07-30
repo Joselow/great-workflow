@@ -1,31 +1,60 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 
 import type { NewLog } from '@/interfaces/Log';
+import { logStore } from '@/store/logStore';
+import { errorToast } from '@/composables/useAlerts';
+
+
+const { selectedLog } = logStore
 
 const emits = defineEmits<{
-  create: [log: NewLog]
+  create: [log: NewLog],
+  update: [log: NewLog],
 }>()
 
-const noteDefault: NewLog = {
-    description: '',
-    tags: '',
-    responsible: '',
+const logDefault: NewLog = {
+  id: '',
+  description: '',
+  tags: '',
+  responsible: '',
 }
 
-const note = reactive({...noteDefault})
+const log = reactive({...logDefault})
 
 const descriptionRef = ref<HTMLInputElement | null>(null)
 
-const onTab = (e: Event) => {
-    if (note.description && note.tags && note.responsible) {
-        emits('create', note) 
-    }
+const onTab = () => {
+  if (!log.description || !log.tags || !log.responsible) {
+    errorToast('All Fields are required')
+    return
+  }
+
+  if (selectedLog.value && selectedLog.value.id) {
+    emits('update', log)
+  }
+  else {
+    emits('create', log) 
+  }
 }
+
+watch(selectedLog, (newVal) => {
+  if (newVal && newVal.id) {
+    log.id = newVal.id
+    log.comment = newVal.comment
+    log.description = newVal.description
+    log.responsible = newVal.responsible
+    log.tags = newVal.tags
+  } else {
+    console.log('CLEAM');
+    
+    Object.assign(log, logDefault)
+  }
+}, { deep: true, immediate: true })
 
 onMounted(()=>{
     if (descriptionRef.value) {
-        descriptionRef.value.focus()
+        // descriptionRef.value.focus()
     }
 })
 </script>
@@ -38,7 +67,7 @@ onMounted(()=>{
                 ref="descriptionRef"
                 class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-red-500 focus:outline-none focus:ring-0 focus:border-red-600 peer" 
                 placeholder="" required 
-                v-model="note.description"
+                v-model="log.description"
                 />
             <label for="floating_desc" class="peer-focus:font-medium absolute text-md text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-red-600 peer-focus:dark:text-red-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
                 Descripción
@@ -55,7 +84,7 @@ onMounted(()=>{
             <input type="who" name="floating_who" id="floating_who" 
                 class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-red-500 focus:outline-none focus:ring-0 focus:border-red-600 peer" 
                 placeholder="" required 
-                v-model="note.responsible"
+                v-model="log.responsible"
                 />
             <label for="floating_who" class="peer-focus:font-medium absolute text-md text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-red-600 peer-focus:dark:text-red-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
                 Quien
@@ -74,7 +103,7 @@ onMounted(()=>{
                 
                 class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-red-500 focus:outline-none focus:ring-0 focus:border-red-600 peer" 
                 placeholder="" required 
-                v-model="note.tags"
+                v-model="log.tags"
                 />
             <label for="floating_tag" class="peer-focus:font-medium absolute text-md text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-red-600 peer-focus:dark:text-red-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
                 Tag

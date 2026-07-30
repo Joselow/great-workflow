@@ -1,6 +1,6 @@
 import { ref, type Ref} from 'vue';
 
-interface Toast {
+export interface Toast {
   id?:  string
   msg?: string
   time?: number

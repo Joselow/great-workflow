@@ -1,12 +1,12 @@
 import { ref, type Ref } from 'vue'
 import api from '@/utils/axios.ts'
 
-import type { NewLog, Log } from '@/interfaces/Log'
+import type { NewLog, Log, PartialLog } from '@/interfaces/Log'
 import type { ResponseComposables } from '@/interfaces/request'
 
-import { useToast } from '@/composables/useToast';
 
-const { launchToast } = useToast()
+import { successToast } from './useAlerts';
+
 
 export function useLog() {
   const loading = ref(false)
@@ -32,22 +32,19 @@ export function useLog() {
     }
     
   }
-  const createLog = async (log: NewLog ): Promise<ResponseComposables<NewLog>> => {
+
+  const createLog = async (log: NewLog ): Promise<ResponseComposables<Log>> => {
     loading.value = true
 
     try {
-      const { data } = await api.post('/log', log)
-      console.log(data);
+      const { data: data } = await api.post('/log', log)
 
-      launchToast({ 
-        msg: 'Created Succesfully',
-        time: 5000,
-        css: 'bg-green-500'
-       })
+
+      successToast('Created Successfully')
 
       return {
         success: true,
-        data
+        data: data 
       }
     } catch (err: any) { 
         return {
@@ -58,11 +55,33 @@ export function useLog() {
     }
   }
 
+  const updateLog = async (id: Log['id'], log: PartialLog): Promise<ResponseComposables<Log>> => {
+    loading .value =  true
+    try {
+      
+      const { data } = await api.put('/log/'+id, log)
+
+      successToast('Updated Successfully')
+
+      return {
+        success: true,
+        data
+      }
+    } catch (error) {
+      return {
+        success: false,
+      }
+    } finally {
+      loading .value =  false
+    }
+  }
+
 
   return {
     loading,
     getLogs,
     logs,
-    createLog
+    createLog,
+    updateLog
   }
 }

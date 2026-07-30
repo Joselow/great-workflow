@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import LogItem from './LogItem.vue'
+
 import type { Log } from '@/interfaces/Log';
 
 
@@ -11,11 +13,9 @@ const props = defineProps<{
 <template>
     <div class="border border-2">
         <template v-for="log in logs">
-            <div class="rounded-lg bg-gray-300">
-                <span>{{  log.description  }}</span>
-                <span>{{  log.responsible  }}</span>
-                <span>{{  log.tags  }}</span>
-            </div>
+            <LogItem
+                :log="log"
+            />
         </template>
     </div>
 

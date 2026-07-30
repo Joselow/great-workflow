@@ -9,7 +9,7 @@ export const CreateLogSchema = z.object({
     responsible: z.string().min(3).max(100),
     tags: z.string().min(2).max(255),
 
-    comment: z.string().min(3).nullish(),
+    comment: z.string().nullish(),
     completed: z.boolean().nullish(),
 });
 

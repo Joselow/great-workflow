@@ -15,6 +15,7 @@ export interface Log {
 }
 
 export interface NewLog {
+    id?: string,
     description: string
     responsible: string
     tags: string
@@ -22,3 +23,5 @@ export interface NewLog {
     completed?: boolean | null
     comment?: string | null
 }
+
+export type PartialLog = Partial<Log>;
