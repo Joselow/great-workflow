@@ -37,7 +37,7 @@
             <circle cx="433.63626" cy="105.17383" r="20" fill="#6e63e6" />
             <circle cx="433.63626" cy="105.17383" r="12.18187" fill="#fff" />
         </svg>
-        <span class="fw-bold text-primary text-center" v-html="message"></span>
+        <span class="fw-bold text-sm text-gray-400 dark:text-gray-500 text-center" v-html="message"></span>
     </div>
   </template>
   
@@ -61,6 +61,7 @@
     align-items: center;
     flex-direction: column;
     gap: 10px;
+    opacity: 0.7;
   }
   
   svg {

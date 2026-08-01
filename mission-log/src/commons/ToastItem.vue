@@ -50,7 +50,7 @@ onUnmounted(() => {
 
 <template>
   <!-- <div> -->
-    <div class="relative bg-gray-600 text-white rounded-lg py-2 px-6 shadow-lg flex justify-between gap-3 min-w-48"
+    <div class="relative bg-gray-800/90 dark:bg-white/10 backdrop-blur-sm text-white rounded-lg py-2 px-6 shadow-lg flex justify-between gap-3 min-w-48"
       :class="css"
     >
       <div class="me-4">
@@ -64,7 +64,7 @@ onUnmounted(() => {
         </slot>
       </div>
       <!-- <button class=" hover:boder text-red-200 rounded-md hover:text-red-500 transition duration-300" -->
-      <button class="absolute top-2 right-4 hover:boder text-red-200 rounded-md hover:text-red-500 transition duration-300"
+      <button class="absolute top-2 right-4  text-red-100 rounded-md hover:text-red-500 transition duration-300"
         @click="hideByClick" 
       >
         x

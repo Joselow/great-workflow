@@ -14,11 +14,13 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class=" w-7xl min-h-screen transition-colors mx-auto">
+  <div class=" min-h-screen transition-colors mx-auto">
     <ToastLauncher/>
-    <Header :full="true" @logout="handleLogout" />
-    <main class="p-6 w-6xl mx-auto">
-      <RouterView />
+    <Header 
+      class="max-w-6xl"
+      :full="true" @logout="handleLogout" />
+    <main class="p-6  w-full">
+        <RouterView />
     </main>
   </div>
 </template>

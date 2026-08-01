@@ -1,3 +1,25 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-brand-cyan: #00C2CB;
+  --color-brand-mint: #7FE0D4;
+  --color-brand-yellow: #FFE38A;
+  --color-brand-orange: #FF9A76;
+  --color-brand-pink: #FF5D8F;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-800 dark:text-gray-100;
+    min-height: 100vh;
+  }
+
+  
+}
+
+.color1{color:#00C2CB;}
+.color2{color:#7FE0D4;}
+.color3{color:#FFE38A;}
+.color4{color:#FF9A76;}
+.color5{color:#FF5D8F;}

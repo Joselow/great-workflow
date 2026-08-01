@@ -58,7 +58,7 @@ export function useLog() {
   const updateLog = async (id: Log['id'], log: PartialLog): Promise<ResponseComposables<Log>> => {
     loading .value =  true
     try {
-      
+
       const { data } = await api.put('/log/'+id, log)
 
       successToast('Updated Successfully')
@@ -76,12 +76,33 @@ export function useLog() {
     }
   }
 
+  const deleteLog = async (id: Log['id']): Promise<ResponseComposables<null>> => {
+    loading.value = true
+
+    try {
+      await api.delete('/log/'+id)
+
+      successToast('Deleted Successfully')
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      return {
+        success: false,
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
 
   return {
     loading,
     getLogs,
     logs,
     createLog,
-    updateLog
+    updateLog,
+    deleteLog,
   }
 }

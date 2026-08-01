@@ -45,25 +45,25 @@ onMounted(() => {
 
 <template>
   <div
-    class="inline-flex overflow-hidden rounded-full border border-gray-300 bg-white text-xs
-            dark:border-gray-700 dark:bg-gray-800"
+    class="inline-flex overflow-hidden rounded-full border border-black/5 bg-white/70 text-xs shadow-sm
+            dark:border-white/10 dark:bg-white/5"
   >
     <button
       type="button"
-      class="cursor-pointer px-3 py-1 dark:bg-gray-700 dark:text-white" 
-      :class="{ 'bg-gray-200': currentTheme === 'light' }"
+      class="cursor-pointer px-3 py-1 transition-colors dark:text-white"
+      :class="{ 'bg-amber-100 dark:bg-amber-950/40': currentTheme === 'light' }"
       @click="setTheme('light')"
       >
-      ☀️ 
+      ☀️
     </button>
 
     <button
       type="button"
-      class="cursor-pointer px-3 py-1 dark:bg-gray-700 dark:text-white"
-      :class="{ 'dark:bg-gray-900 ': currentTheme === 'dark' }"
+      class="cursor-pointer px-3 py-1 transition-colors dark:text-white"
+      :class="{ 'bg-violet-100 dark:bg-violet-950/40': currentTheme === 'dark' }"
       @click="setTheme('dark')"
       >
-      🌙 
+      🌙
     </button>
   </div>
 </template>

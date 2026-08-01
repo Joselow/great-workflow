@@ -36,24 +36,24 @@ const confirm = () => {
     maxWidth="sm"      
     >
     <div class="py-4 px-6">
-      <h2 class="text-lg font-medium dark:text-gray-100" v-if="title">{{ title }}</h2>                  
+      <h2 class="text-center text-lg text-gray-800 font-semibold dark:text-gray-100" v-if="title">{{ title }}</h2>
       <slot>
       </slot>
 
       <div class="mt-6 flex justify-center gap-3">
-        <button class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-25 transition ease-in-out duration-150"
+        <button class="cursor-pointer text-white inline-flex items-center px-4 py-2 rounded-md border-2 border-gray-300 dark:border-white/15 text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200 bg-gray-700 hover:bg-gray-600 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-25"
           @click="hideModal"
         >
-          Close
+          Cancelar
         </button>
 
-        <ButtonLoading class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"            
+        <ButtonLoading class="cursor-pointer inline-flex items-center px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wide text-white bg-red-500 hover:bg-red-400 active:bg-brand-pink transition-colors focus:outline-none focus:ring-2 focus:ring-brand-pink/40 disabled:opacity-25"
           type="button"
           @click="confirm"
           :loading="loading"
         >
-          Confirm
-        </ButtonLoading>          
+          Confirmar
+        </ButtonLoading>
       </div>
     </div>
   </CustomModal>

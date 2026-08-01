@@ -43,7 +43,7 @@ onUnmounted(() => {
 
 const maxWidthClass = computed(() => {
   return {
-    sm: 'sm:w-3/4 md:w-5/12 lg:w-3/9 xl:w-1/4',
+    sm: 'sm:w-3/4 md:w-6/12 lg:w-3/9 xl:w-2/6',
     md: 'sm:w-9/12 md:w-8/12 lg:w-6/12',
     lg: 'sm:w-5/6 lg:w-4/6',
     xl: 'sm:w-11/12',
@@ -73,7 +73,7 @@ const maxWidthClass = computed(() => {
             >
                 <div
                 v-show="show"
-                class="fixed inset-0 bg-gray-500 dark:bg-gray-900 opacity-75 z-40"
+                class="fixed inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm z-40"
                 @click="close"
                 />
             </Transition>
@@ -89,7 +89,7 @@ const maxWidthClass = computed(() => {
             >
                 <div
                 v-show="show"
-                class="relative z-50 mb-6 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl transform transition-all mx-auto"
+                class="relative z-50 mb-6 bg-gray-100 dark:bg-zinc-900 border-1 border-gray-900/10 dark:border-white/15 rounded-lg overflow-hidden shadow-lg transform transition-all mx-auto"
                 :class="maxWidthClass"
                 >
                 <slot />
