@@ -8,7 +8,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@commons": ["src/commons/*"],
+      "@commons/*": ["src/commons/*"],
     },
 
     /* Linting */

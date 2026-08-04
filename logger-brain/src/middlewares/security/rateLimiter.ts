@@ -29,7 +29,7 @@ export const globalLimiter = createLimiter({
 // ========= CREACIÓN DE CUENTAS =========
 export const createAccountLimiter = createLimiter({
   windowMs: 60 * 60 * 1000,   // 1 hora
-  max: 5,                     // 5 registros por IP en 1 hora
+  max: 60,                     // 5 intentos de registros por IP en 1 hora
 });
 
 // ========= LOGIN =========

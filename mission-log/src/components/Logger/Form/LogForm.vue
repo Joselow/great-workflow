@@ -37,6 +37,10 @@ const handleCreate = async (log: NewLog) => {
 
   if (success && data) {
     selectLog(data)
+
+    const report = generateLogInfo(data)
+    textDataStore.appendTextData(report, 'markdown')
+
     emits('create', data)
   }
 }
@@ -65,6 +69,10 @@ const handleUpdate = async (note: PartialLog) => {
 
   if (success && data) {
     selectedLog.value = data
+
+    const report = generateLogInfo(data)
+    textDataStore.appendTextData(report, 'markdown')
+
     emits('update', data)
   }
 }
@@ -84,9 +92,15 @@ const handleConfirmFinishTask = async() => {
     return
   }
 
-  const { success, data } = await updateLog(selectedLog.value.id, {
+  const payload: PartialLog = {
     completed: !selectedLog.value.completed
-  })
+  }
+
+  if (!selectedLog.value.comment) {
+    payload.comment = textDataStore.textData.value
+  }
+
+  const { success, data } = await updateLog(selectedLog.value.id, payload)
 
   if (success && data) {
     selectedLog.value = data
@@ -124,12 +138,16 @@ const handleGenerateInfo = () => {
 
   const data = generateLogInfo(selectedLog.value)
 
-  textDataStore.setTextData(data.trim())
+  textDataStore.appendTextData(data, 'markdown')
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.code === 'Backspace') {
+  const target = event.target as HTMLElement | null
+  const isTypingInField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
+
+  if (event.key === '+' && !isTypingInField) {
     if (selectedLog.value?.id) {
+      event.preventDefault()
       clearLog()
     }
   }
@@ -214,7 +232,7 @@ onUnmounted(() => {
             class="cursor-pointer rounded-md border-2 border-gray-300 dark:border-white/15 px-4 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors hover:bg-gray-100 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-gray-300"
             @click="clearLog"
             >
-            Cancelar
+            Quitar 
           </button>
           <button type="button"
             class="cursor-pointer rounded-md bg-brand-pink px-4 py-1.5 text-xs font-semibold text-white transition-[filter] hover:brightness-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-brand-pink/40"

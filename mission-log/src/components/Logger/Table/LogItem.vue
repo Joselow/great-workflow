@@ -9,7 +9,7 @@ import { getPastelPalette } from '@/helpers/pastel';
 
 import type { Log } from '@/interfaces/Log';
 
-const { selectLog, selectedLog } = logStore
+const { selectLog, selectedLog, clearLog } = logStore
 
 interface Props {
   log: Log
@@ -25,12 +25,20 @@ const isSelected = computed(() => selectedLog.value?.id === props.log.id)
 const palette = computed(() => getPastelPalette(props.log.responsible || props.log.description))
 
 const handleSelectLog = (log: Log) => {
+
+  if (isSelected.value) {
+    console.log('limpia');
+    clearLog()
+  } else {
+    console.log('select');
+    
     selectLog(log)
+  }
 }
 </script>
 
 <template>
-    <div class="group flex items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
+    <div class="cursor-pointer group flex items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
       shadow-lg
     "
       :class="isSelected

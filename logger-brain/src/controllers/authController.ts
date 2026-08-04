@@ -2,12 +2,14 @@ import type { Request, Response } from "express";
 
 import { generateAccessToken } from "../utils/jwt";
 import { comparePassword, hashPassword } from "../utils/password";
-import { success } from "../utils/responses";
+import { simpleSuccess, success } from "../utils/responses";
 
-import { getUserByEmail, createUser } from "../services/user";
+import { getUserByEmail, createUser, getActiveUserById } from "../services/user";
 
 import { BadRequestError400 } from "../errors/BadRequestError400";
 import { InvalidCredentialsError401 } from "../errors/InvalidCredentialsError401";
+import { NotFoundError404 } from "../errors/NotFoundError404";
+import { getUserPayload } from "../helpers/authHelpers";
 
 export async function register(req: Request, res: Response) {
   const { email, password, name, phone } = req.body ?? {};
@@ -70,4 +72,18 @@ export async function login(req: Request, res: Response) {
     user: userWithoutPassword,
     token
   });
+}
+
+export async function me(req: Request, res: Response) {
+  const payload = getUserPayload(req)
+
+  const user = await getActiveUserById(payload.id);
+
+  if (!user) {
+    throw new NotFoundError404('User not found')
+  }
+
+  const { password: _, ...userWithoutPassword } = user;
+
+  simpleSuccess(res, 200, userWithoutPassword);
 }

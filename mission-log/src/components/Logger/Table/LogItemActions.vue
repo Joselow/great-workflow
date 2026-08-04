@@ -30,7 +30,7 @@ const handleSelect = () => {
 const handleInfo = () => {
   const data = generateLogInfo(props.log)
 
-  textDataStore.setTextData(data)
+  textDataStore.setTextData(data, 'markdown')
 }
 
 const handleConfirmDelete = () => {

@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'STATIC_AUTH_TOKEN_SESSION'
+const TOKEN_KEY = 'STATIC_AUTH_TOKEN_SESSION_FLOW_WORK'
 
 export const getCookie = (name: string = TOKEN_KEY): string | null => {
   const value = `; ${document.cookie}`

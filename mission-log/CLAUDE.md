@@ -24,7 +24,7 @@ src/
 │
 ├── layouts/           # Layouts (Auth, Dashboard, etc.)
 │
-├── pages/             # Vistas del router
+├── views/             # Vistas del router
 │   ├── auth/
 │   ├── dashboard/
 │   ├── users/

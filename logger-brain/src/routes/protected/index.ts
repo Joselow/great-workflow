@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { logRouter } from "./logRouter";
 
 export const protectedRouter = Router();

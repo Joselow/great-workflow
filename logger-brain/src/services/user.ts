@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users, type User, NewUser } from '../db/schemas/users.js';
 
@@ -6,6 +6,13 @@ import { users, type User, NewUser } from '../db/schemas/users.js';
 // Obtener un usuario por ID
 export async function getUserById(id: number): Promise<User | null> {
   const [user] = await db.select().from(users).where(eq(users.id, id));
+  return user || null;
+}
+
+// Obtener un usuario activo por ID
+export async function getActiveUserById(id: number): Promise<User | null> {
+  const [user] = await db.select().from(users)
+    .where(and(eq(users.id, id), eq(users.isActive, true)));
   return user || null;
 }
 

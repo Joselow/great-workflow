@@ -4,7 +4,7 @@ export const RegisterSchema = z.object({
     email: z.string().min(7),
     password: z.string().min(6),
     name: z.string().min(2),
-    phone: z.string().min(6),
+    phone: z.string().min(6).optional(),
   });
 
 type RegisterUser = z.infer<typeof RegisterSchema>;

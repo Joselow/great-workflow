@@ -1,48 +1,68 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { textDataStore } from '@/store/textDataStore';
+import { successToast, errorToast } from '@/composables/useAlerts';
 
+const { textData, format, expanded, toggleExpanded, clearTextData } = textDataStore
 
-interface Props {
-  textData?: string
+const handleCopy = async () => {
+  if (!textData.value) {
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(textData.value)
+    successToast('✓ Copiado')
+  } catch (err) {
+    errorToast('No se pudo copiar el texto')
+  }
 }
 
-const props = defineProps<Props>()
-
-const data = ref('')
-const expanded = ref(false)
-
-watch(() => props.textData, (value) => {
-  if (value) {
-    data.value = value
-    expanded.value = true
-  } else {
-    data.value = ''
-  }
-});
-
-const toggleExpanded = () => {
-  expanded.value = !expanded.value
+const handleClear = () => {
+  clearTextData()
 }
 </script>
 
 <template>
-  <aside class="flex shrink-0 self-stretch rounded-l-md border-y border-l border-black/5 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-sm shadow-sm overflow-hidden transition-[width] duration-300"
-    :class="expanded ? 'w-96' : 'w-4'"
+  <aside
+    class="flex flex-col md:flex-row shrink-0 fixed inset-x-0 bottom-0 z-40 md:static md:inset-auto md:z-auto md:self-stretch rounded-t-lg md:rounded-t-none md:rounded-l-md border md:border-y md:border-l border-black/10 dark:border-white/10 bg-white/95 md:bg-white/60 dark:bg-zinc-950/95 md:dark:bg-white/5 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.12)] md:shadow-sm overflow-hidden transition-[width,height] duration-300"
+    :class="expanded ? 'h-80 w-full md:h-auto md:w-96' : 'h-10 w-full md:h-auto md:w-4'"
   >
     <button type="button"
-      class="bg-teal-500/70 flex shrink-0 items-center justify-center cursor-pointer text-white/80 hover:text-white transition-colors"
-      :class="expanded ? 'w-3' : 'w-4'"
+      class="bg-teal-500/70 flex shrink-0 items-center justify-center gap-1 cursor-pointer text-white/80 hover:text-white transition-colors w-full h-10 md:h-auto"
+      :class="expanded ? 'md:w-3' : 'md:w-4'"
       title="Doble clic para expandir/contraer"
       @dblclick="toggleExpanded"
       @click="toggleExpanded"
     >
-      <span class="text-xs font-medium tracking-wide [writing-mode:vertical-rl] select-none">Writter</span>
+      <span class="text-xs font-medium tracking-wide md:[writing-mode:vertical-rl] select-none">
+        Writer {{ expanded ? '▲' : '▼' }}
+      </span>
     </button>
 
-    <textarea v-if="expanded"
-      class="w-full min-h-full resize-none bg-transparent px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none placeholder:text-gray-400"
-      rows="20"
-      v-model="data"
-    ></textarea>
+    <div v-if="expanded" class="relative flex-1 min-h-0 min-w-0">
+      <button type="button"
+        class="absolute top-2 right-2 z-10 cursor-pointer rounded-md bg-white/80 dark:bg-black/40 px-2 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-brand-cyan transition-colors shadow-sm"
+        title="Copiar texto"
+        @click="handleCopy"
+      >
+        Copiar
+      </button>
+      <button type="button"
+        class="absolute top-10 right-2 z-10 cursor-pointer rounded-md bg-white/80 dark:bg-black/40 px-2 py-1 text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-brand-cyan transition-colors shadow-sm"
+        title="Copiar texto"
+        @click="handleClear"
+      >
+        Limpiar
+      </button>
+
+      <textarea
+        class="w-full h-full resize-none bg-transparent px-3 py-2 pr-16 text-sm focus:outline-none placeholder:text-gray-400 border-0 border-l-2"
+        :class="format === 'markdown'
+          ? 'text-sky-900 dark:text-sky-500 border-brand-cyan'
+          : 'text-gray-700 dark:text-gray-200 border-transparent'"
+        rows="20"
+        v-model="textData"
+      ></textarea>
+    </div>
   </aside>
 </template>

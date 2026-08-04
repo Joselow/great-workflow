@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { User } from '../interfaces'
+import type { User } from '../interfaces/auth'
 
 const user = ref<User | null>(null)
 const isAuthenticated = ref(false)

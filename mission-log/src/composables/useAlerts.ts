@@ -7,17 +7,23 @@ const { launchToast } = useToast()
 export const successToast = async (msg: string, time?: number) => {
     launchToast({ 
         msg: msg,
-        time: time ?? 2500,
+        time: time ?? 3000,
         css: 'bg-green-600 shadow-md',
         html: true
     })
 }
 
-export const errorToast = async (msg: string, time?: number) => {
+export const errorToast = async (msg: string, timeValue?: number | null) => {
+    let time = null
+
+    if (timeValue != null) {
+        time = 4500
+    }
+
     launchToast({ 
         msg: msg,
-        time: time ?? 2500,
-        css: 'bg-red-600 shadow-md',
+        ...(time && { time }),
+        css: 'bg-red-500 shadow-md',
         html: true
     })
     
