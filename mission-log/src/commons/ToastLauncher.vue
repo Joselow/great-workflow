@@ -19,6 +19,12 @@ onUnmounted(() => {
   hideAllToasts()
 })
 
+const handleRemoveToast = (id?: string) => {
+  if (id) {
+    hideToast(id)
+  }
+}
+
 </script>
 
 <template>
@@ -27,7 +33,7 @@ onUnmounted(() => {
       <TransitionGroup name="list" tag="ul" appear >
         <li v-for="(toast) in toasts" :key="toast.id" class="py-2 w-auto">
           <ToastItem 
-            @remove="hideToast"
+            @remove="handleRemoveToast"
             :id="toast.id"
             :css="toast.css"
             :msg="toast.msg"

@@ -11,7 +11,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emits = defineEmits<{
-  remove: [id: string | void];
+  remove: [id?: string];
 }>();
 
 const timer = ref()
