@@ -24,6 +24,7 @@ const handleRemoveToast = (id?: string) => {
     hideToast(id)
   }
 }
+
 </script>
 
 <template>
