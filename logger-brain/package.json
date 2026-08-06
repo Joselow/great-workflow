@@ -5,14 +5,19 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.js",
+
+    "build:app": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.js",
+    "build:migrate": "esbuild src/db/migrate.ts --bundle --platform=node  --outfile=dist/migrate.js",
+    "build": "pnpm build:app && pnpm build:migrate",
+
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:migrate:prod": "node dist/migrate.js"
   },
   "keywords": [],
   "author": "",
