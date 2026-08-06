@@ -8,10 +8,10 @@ import ButtonLoading from '@commons/ButtonLoading.vue'
 
 import { useAuth } from '@/composables/useAuth'
 
-import type { LoginCredentials } from '@/interfaces'
+import type { LoginCredentials } from '../../interfaces/auth'
 
 const router = useRouter()
-const { login, loading, error } = useAuth()
+const { login, loading } = useAuth()
 
 const form = reactive<LoginCredentials>({
   email: '',

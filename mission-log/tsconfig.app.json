@@ -9,6 +9,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@commons/*": ["src/commons/*"],
+      "@interfaces/*": ["/src/interfaces/*"],
+
     },
 
     /* Linting */

@@ -21,7 +21,8 @@
 
     "paths": {
       "@/*": ["./src/*"],
-      "@commons": ["./src/commons/*"],
+      "@commons/*": ["./src/commons/*"],
+      "@interfaces/*": ["/src/interfaces/*"],
     },
   },
   "include": ["vite.config.ts"]

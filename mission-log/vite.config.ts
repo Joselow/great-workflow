@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       "@": "/src",
       "@commons": "/src/commons",
+      "@interfaces": "/src/interfaces",
     },
   },
 
