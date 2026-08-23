@@ -20,15 +20,10 @@ const saveComment = async () => {
   lastComment = comment.value
 }
 
-
-watch(logStore.selectedLog , (value) => {
-  
-  if (value?.comment) {
-    comment.value = value.comment
-  } else {
-    comment.value = ''
-  }
-});
+watch(logStore.selectedLog, (value) => {
+  comment.value = value?.comment ?? ''
+  lastComment = comment.value
+})
 
 </script>
 

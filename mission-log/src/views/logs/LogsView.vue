@@ -41,10 +41,10 @@ const handleDeleteLog = async (log: Log) => {
 </script>
 
 <template>
-  <div>
+  <div class="min-w-0 max-w-full">
     <CommonLoader v-if="loading"/>
-    <div class="flex gap-4 -mr-6 mt-2">
-      <div class="ms-20 me-5 flex-1 min-w-0 flex flex-col gap-4">
+    <div class="flex min-w-0 max-w-full mt-2">
+      <div class="ms-20 me-3 flex-1 min-w-0 flex flex-col gap-4">
         <LogForm
           @create="handleCreateLog"
           @update="handleUpdateLog"

@@ -17,13 +17,16 @@ const emits = defineEmits<{
 
 <template>
     <div class="flex flex-col gap-1.5">
-        <EmptyRecords v-if="!logs.length" message="Aún no hay registros" />
-
+      <template v-if="!logs.length">
+        <EmptyRecords message="Aún no hay registros" />
+      </template>
+      <template v-else>
         <LogItem
             v-for="log in logs"
-            :key="log.id"
-            :log="log"
-            @delete="emits('delete', $event)"
-        />
+              :key="log.id"
+              :log="log"
+              @delete="emits('delete', $event)"
+          />
+        </template>
     </div>
 </template>

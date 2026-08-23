@@ -5,6 +5,8 @@ const selectedLog = ref<Log | null>(null)
 
 export const useLogStore = () => {
   const selectLog = (logData: Log) => {
+    console.log('new log', logData);
+    
     selectedLog.value = logData
   }
 

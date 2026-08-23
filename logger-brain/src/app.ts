@@ -36,10 +36,9 @@ export function createApp() {
   app.get('/', (req, res) => {
     res.json({
         success: true,
-        message: 'Flow Work api',
-        version: '1.0.0',
+        message: 'Logger Brain apis',
         endpoints: {
-            api: '/api/v1',
+            apis: ['/api/v1'],
         },
     });
 });

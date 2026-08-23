@@ -1,5 +1,5 @@
 import { ref, type Ref } from 'vue'
-import api from '@/utils/axios.ts'
+import apiApp from '@/utils/axios/apiApp'
 
 import type { NewLog, Log, PartialLog } from '@/interfaces/Log'
 import type { ResponseComposables } from '@/interfaces/request'
@@ -16,7 +16,7 @@ export function useLog() {
     loading.value = true
 
     try {
-      const { data } = await api.get('/log')
+      const { data } = await apiApp.get('/log')
       console.log(data);
       logs.value = data
       return {
@@ -37,7 +37,7 @@ export function useLog() {
     loading.value = true
 
     try {
-      const { data: data } = await api.post('/log', log)
+      const { data: data } = await apiApp.post('/log', log)
 
 
       successToast('Created Successfully')
@@ -59,7 +59,7 @@ export function useLog() {
     loading .value =  true
     try {
 
-      const { data } = await api.put('/log/'+id, log)
+      const { data } = await apiApp.put('/log/'+id, log)
 
       successToast('Updated Successfully')
 
@@ -80,7 +80,7 @@ export function useLog() {
     loading.value = true
 
     try {
-      await api.delete('/log/'+id)
+      await apiApp.delete('/log/'+id)
 
       successToast('Deleted Successfully')
 

@@ -165,8 +165,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
-    <CommonLoader v-if="loading"/>
+  <div class="relative ">
+    <CommonLoader v-if="loading" />
+
+
+    <button type="button"
+      class="
+      z-20
+      absolute right-0 -top-7
+      cursor-pointer
+      text-red-500/90 py-1.5 text-lg font-semibold transition-[filter] 
+      hover:brightness-95 active:brightness-90 focus:outline-none focus:ring-2 
+      hover:bg-red-900/3
+      rounded-lg
+      px-2
+      m-0
+      py-0
+      focus:ring-red-600/40"
+      @click="clearLog"
+      v-if="selectedLog?.id"
+    >
+      <svg class="" fill="currentColor" width="60px" height="60px" viewBox="0 0 24 24" version="1.2" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M17.414 6.586c-.78-.781-2.048-.781-2.828 0l-2.586 2.586-2.586-2.586c-.78-.781-2.048-.781-2.828 0-.781.781-.781 2.047 0 2.828l2.585 2.586-2.585 2.586c-.781.781-.781 2.047 0 2.828.39.391.902.586 1.414.586s1.024-.195 1.414-.586l2.586-2.586 2.586 2.586c.39.391.902.586 1.414.586s1.024-.195 1.414-.586c.781-.781.781-2.047 0-2.828l-2.585-2.586 2.585-2.586c.781-.781.781-2.047 0-2.828z"></path></g></svg>
+    </button>
 
     <ConfirmModal
       v-model="modalConfirm"
@@ -190,14 +210,17 @@ onUnmounted(() => {
       />
     </div>
 
-    <div class="mt-4 flex flex-wrap items-start gap-6"
-      v-if="selectedLog?.id"
+    <div class="mt-4 flex flex-wrap items-start gap-6"     
     >
       <StoreComment
         @save="handleSaveComment"
       />
 
-      <div class="flex flex-col gap-3">
+      <template v-if="selectedLog?.id">
+
+
+
+        <div class="flex flex-col gap-3">
         <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Estado</span>
 
         <button type="button"
@@ -206,7 +229,10 @@ onUnmounted(() => {
           :disabled="loading"
           v-if="selectedLog?.completed"
           >
-          <span>✓ Finalizado</span>
+          <span class="material-symbols-outlined">
+            siren_check
+          </span>
+          <span>Finalizado</span>
         </button>
         <button type="button"
           @click="handleFinishTask"
@@ -214,6 +240,9 @@ onUnmounted(() => {
            :disabled="loading"
            v-if="!selectedLog?.completed"
            >
+          <span class="material-symbols-outlined leading-none align-middle">
+            hourglass_check
+          </span>
           Finalizar
         </button>
       </div>
@@ -226,22 +255,30 @@ onUnmounted(() => {
             class="cursor-pointer rounded-md bg-brand-cyan px-4 py-1.5 text-xs font-semibold text-white transition-[filter] hover:brightness-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
             @click="handleGenerateInfo"
             >
+            <span class=" material-symbols-outlined leading-none align-middle">
+              data_info_alert
+            </span>
             Informe
           </button>
-          <button type="button"
+          <!-- <button type="button"
             class="cursor-pointer rounded-md border-2 border-gray-300 dark:border-white/15 px-4 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors hover:bg-gray-100 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-gray-300"
             @click="clearLog"
             >
             Quitar 
-          </button>
+          </button> -->
           <button type="button"
             class="cursor-pointer rounded-md bg-brand-pink px-4 py-1.5 text-xs font-semibold text-white transition-[filter] hover:brightness-95 active:brightness-90 focus:outline-none focus:ring-2 focus:ring-brand-pink/40"
             @click="handleDeleteTask"
             >
-            Eliminar
+            <span class="text-xs material-symbols-outlined leading-none align-middle">
+              delete
+              </span>
+              <span>                Eliminar
+              </span>
           </button>
         </div>
       </div>
+      </template>
     </div>
   </div>
 </template>

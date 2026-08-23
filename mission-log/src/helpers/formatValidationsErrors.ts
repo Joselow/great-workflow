@@ -4,7 +4,7 @@ export function formatErrorsToHtml(errors: FieldErrors): string {
   const fields = Object.keys(errors);
   if (!fields.length) return '';
 
-  const title = '<h3 class="font-semibold text-white">Please correct the following errors</h3>';
+  const title = '<h3 class="font-semibold text-white">Correct errors</h3>';
 
   const body = fields
     .map((field) => {
@@ -26,7 +26,7 @@ export function formatErrorsToHtml(errors: FieldErrors): string {
 
   return `<div>
             ${title}
-            <hr class="py-1 px-0 text-gray-200/50">
+            <hr class="py-1 px-0 text-gray-100/20">
             ${body}
           </div>`;
 }

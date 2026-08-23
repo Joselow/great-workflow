@@ -38,7 +38,7 @@ const handleSelectLog = (log: Log) => {
 </script>
 
 <template>
-    <div class="cursor-pointer group flex items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
+    <div class="cursor-pointer group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
       shadow-lg
     "
       :class="isSelected
@@ -48,21 +48,20 @@ const handleSelectLog = (log: Log) => {
     >
       <div class="flex min-w-0 items-center gap-3">
         <div class="flex min-w-0 flex-col gap-1">
-          <span class="truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+          <span class="truncate text-md font-medium text-gray-800 dark:text-gray-100">
             {{ log.description }}
           </span>
 
-          <div class="flex flex-wrap items-center gap-1.5 text-xs">
-            <span v-if="log.responsible" class="text-gray-500 dark:text-gray-400">
-              {{ log.responsible }}
-            </span>
-            <span v-if="log.responsible && log.tags" class="text-gray-300 dark:text-gray-600">·</span>
-            <span v-if="log.tags" class="rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-white"
-              :class="palette.bg"
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <span v-if="log.tags" class="px-2 rounded-md py-0.5 text-[11px] font-semibold"
+              :class="palette.bg + ' ' + palette.text"
             >
               {{ log.tags }}
             </span>
-            <span v-if="log.completed" class="flex items-center gap-1 font-medium text-emerald-500 ">
+            <span v-if="log.responsible" class="text-gray-700 dark:text-gray-300">
+              {{ log.responsible }}
+            </span>
+            <span v-if="log.completed" class="flex items-center gap-1 text-lg font-medium text-emerald-500 ">
               ✓ Finalizado
             </span>
           </div>

@@ -23,7 +23,7 @@ export const errorToast = async (msg: string, timeValue?: number | null) => {
     launchToast({ 
         msg: msg,
         ...(time && { time }),
-        css: 'bg-red-500 shadow-md',
+        css: 'bg-rose-500/90 shadow-md',
         html: true
     })
     

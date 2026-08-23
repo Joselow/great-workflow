@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import api from '@/utils/axios.ts'
+import api from '@/utils/axios/api'
 
 import { setAuthToken, deleteAuthToken, getAuthToken } from '../utils/cookies'
 import { authStore } from '../store/authStore'

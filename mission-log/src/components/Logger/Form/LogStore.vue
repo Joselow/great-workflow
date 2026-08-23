@@ -18,6 +18,7 @@ const logDefault: NewLog = {
   description: '',
   tags: '',
   responsible: '',
+  comment: '',
 }
 
 const log = reactive({...logDefault})
@@ -36,12 +37,14 @@ const onTab = () => {
   else {
     emits('create', log) 
   }
+  console.log('log', log);
+  
 }
 
 watch(selectedLog, (newVal) => {
   if (newVal && newVal.id) {
     log.id = newVal.id
-    log.comment = newVal.comment
+    log.comment = newVal.comment ?? ''
     log.description = newVal.description
     log.responsible = newVal.responsible
     log.tags = newVal.tags
