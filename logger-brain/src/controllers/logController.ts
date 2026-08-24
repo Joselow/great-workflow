@@ -6,24 +6,33 @@ import { getUserPayload } from "../helpers/authHelpers";
 import { BadRequestError400 } from "../errors/BadRequestError400";
 
 import { simpleSuccess } from "../utils/responses";
-import { uuidSchema, verifyUUID } from "../validations/uuid";
+import { verifyUUID } from "../validations/uuid";
 
 
 export const getLog = async (req: Request, res: Response) => {
   const user = getUserPayload(req)
+  const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined
 
-  const logsData = await logService.getLog(user.id)
+  if (projectId) {
+    const validated = verifyUUID(projectId)
+    if (!validated.success) {
+      throw new BadRequestError400('Invalid projectId')
+    }
+  }
+
+  const logsData = await logService.getLog(user.id, projectId)
 
   return simpleSuccess(res, 200, logsData)
 }
 
 export const createLog = async (req: Request, res: Response) => {
-    const { meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
+    const { projectId, meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
 
     const user = getUserPayload(req)
 
     const newLog = await logService.createLog({
       userId: user.id,
+      projectId,
       meetingId, 
       typeMeetingLink, 
       description, 
@@ -39,10 +48,11 @@ export const createLog = async (req: Request, res: Response) => {
 export const updateLog = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
+    const { projectId, meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
 
-  const log = await logService.updateLog(id, {
-    meetingId,
+    const log = await logService.updateLog(id, {
+      projectId,
+      meetingId,
     typeMeetingLink,
     description,
     responsible,

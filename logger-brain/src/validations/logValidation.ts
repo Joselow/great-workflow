@@ -2,6 +2,7 @@ import { z } from "zod";
 
 // Create
 export const CreateLogSchema = z.object({
+    projectId: z.uuidv7(),
     meetingId: z.uuidv7().nullish(),
     typeMeetingLink : z.enum(["meet-log", "log-meet"]).nullish(),
 

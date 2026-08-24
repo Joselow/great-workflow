@@ -6,6 +6,7 @@ import { timestamps } from './commons.js';
 import { logs } from './logs.js';
 import { meetings } from './meetings.js';
 import { tags } from './tags.js';
+import { projects } from './projects.js';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -20,6 +21,7 @@ export const users = pgTable('users', {
 
 export const usersRelations = relations(users, ({ many }) => ({
   logs: many(logs),
+  projects: many(projects),
   meetings: many(meetings),
   tags: many(tags),
 }));

@@ -1,12 +1,18 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, and, eq } from "drizzle-orm";
 
 import { db } from '../db/index.js';
 import { logs, NewLog } from "../db/schemas/logs";
 
 
-export async function getLog(userId: number) {
+export async function getLog(userId: number, projectId?: string) {
+    const conditions = [eq(logs.userId, userId)];
+
+    if (projectId) {
+        conditions.push(eq(logs.projectId, projectId));
+    }
+
     const logsData = await db.select().from(logs)
-      .where(eq(logs.userId, userId))
+      .where(and(...conditions))
       .orderBy(asc(logs.createdAt));
     return logsData
 }
