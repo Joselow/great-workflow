@@ -10,6 +10,10 @@ export async function getProjects(userId: number) {
         .orderBy(asc(projects.createdAt));
 }
 
+export async function getProjectById(id: string) {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project;
+}
 export async function createProject(newProject: NewProject) {
     const [project] = await db.insert(projects).values(newProject).returning();
     return project;

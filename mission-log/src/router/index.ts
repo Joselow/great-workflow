@@ -7,13 +7,13 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('@/views/auth/LoginView.vue'),
-    meta: { requiresAuth: false },
+    meta: { requiresAuth: false, guestOnly: true },
   },
   {
     path: '/register',
     name: 'register',
     component: () => import('@/views/auth/RegisterView.vue'),
-    meta: { requiresAuth: false },
+    meta: { requiresAuth: false, guestOnly: true },
   },
   {
     path: '/',
@@ -26,6 +26,30 @@ const routes = [
     name: 'logger',
     component: () => import('@/views/logs/LogsView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/cards',
+    name: 'cards',
+    component: () => import('@/views/logs/LogsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/new',
+    name: 'newProject',
+    component: () => import('@/views/projects/ProjectFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/projects/:id',
+    name: 'editProject',
+    component: () => import('@/views/projects/ProjectFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'notFound',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { requiresAuth: false },
   },
 ]
 
@@ -41,7 +65,7 @@ router.beforeEach((to) => {
     return { name: 'login' }
   }
 
-  if (!to.meta.requiresAuth && isAuthenticated) {
+  if (to.meta.guestOnly && isAuthenticated) {
     return { name: 'home' }
   }
 })

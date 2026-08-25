@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
 
 import StoreComment from './SaveComment.vue'
 import LogStore from './LogStore.vue'
@@ -8,8 +9,10 @@ import ConfirmModal from '@commons/ConfirmModal.vue'
 
 import { logStore } from '@/store/logStore.ts';
 import { textDataStore } from '@/store/textDataStore.ts';
+import { projectStore } from '@/store/projectStore.ts';
 
 import { useLog } from '@/composables/useLog.ts';
+import { useProject } from '@/composables/useProject.ts';
 
 import { errorToast } from '@/composables/useAlerts.ts';
 import { useShowStates } from '@/composables/useShowStates.ts';
@@ -18,9 +21,12 @@ import { generateLogInfo } from '@/helpers/logInfo.ts';
 
 import type { Log, NewLog, PartialLog } from '@/interfaces/Log.js';
 
-
+const route = useRoute()
 const { selectLog, selectedLog, clearLog } = logStore
+const { activeProject, openDrawer } = projectStore
 const { createLog, loading, updateLog } = useLog()
+const { showProjectsDrawer } = useProject()
+
 
 const emits = defineEmits<{
   create: [log: Log],
@@ -33,7 +39,16 @@ const { modalDelete, onModalDelete, offModalDelete } = useShowStates("modalDelet
 
 
 const handleCreate = async (log: NewLog) => {
-  const { success, data } = await createLog(log)
+  if (!activeProject.value?.id) {
+    errorToast('Selecciona un proyecto para crear logs')
+    openDrawer(route.fullPath)
+    return
+  }
+
+  const { success, data } = await createLog({
+    ...log,
+    projectId: activeProject.value.id,
+  })
 
   if (success && data) {
     selectLog(data)
@@ -203,6 +218,20 @@ onUnmounted(() => {
       <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer.</p>
     </ConfirmModal>
 
+    <div
+      v-if="!activeProject"
+      class="mb-4 rounded-lg border border-brand-orange/30 bg-brand-orange/10 px-4 py-3 text-sm text-gray-700 dark:text-gray-200"
+    >
+      Para crear logs necesitas un proyecto activo.
+      <button
+        type="button"
+        class="ml-1 cursor-pointer font-semibold text-brand-orange underline-offset-2 hover:underline"
+        @click="showProjectsDrawer(route.fullPath)"
+      >
+        Seleccionar o crear proyecto
+      </button>
+    </div>
+
     <div class="mt-2">
       <LogStore
         @create="handleCreate"
@@ -213,6 +242,7 @@ onUnmounted(() => {
     <div class="mt-4 flex flex-wrap items-start gap-6"     
     >
       <StoreComment
+      v-show="selectedLog?.id"
         @save="handleSaveComment"
       />
 

@@ -1,31 +1,53 @@
 <script setup lang="ts">
-import { RouterView, useRoute } from 'vue-router';
+import { defineAsyncComponent } from 'vue';
+import { RouterView, useRoute,    } from 'vue-router';
 
 import Header from './components/Header.vue';
 import ToastLauncher from './commons/ToastLauncher.vue';
+import SideBarText from './commons/SideBarText.vue';
+
+const ProjectDrawer = defineAsyncComponent(() => import('./components/Project/ProjectDrawer.vue'));
+
+import { projectStore } from './store/projectStore';
 
 import { useAuth } from './composables/useAuth';
+import { useProjectSelected } from './composables/useProjectSelected';
+import { useProject } from './composables/useProject';
 import { getAuthToken } from './utils/cookies';
 import FullScreenLoader from './commons/FullScreenLoader.vue';
-import { errorToast } from './composables/useAlerts.ts';
+
+const { setActiveProject, renderProjectDrawer } = projectStore;
 
 const route = useRoute();
-const { logout, fetchMe, loading: isInitializing } = useAuth();
-
-const handleLogout = () => {
-  logout();
-};
+const { fetchMe, loading: isInitializing } = useAuth();
+const { getStoredActiveProject } = useProjectSelected();
+const { showProjectsDrawer } = useProject();
 
 
 const checkAuth = async () => {
   const token = getAuthToken()
 
   if (token) {
-    fetchMe();
+    await fetchMe();
   }
 }
 
-checkAuth()
+const getActiveProject = async () => {
+  const storedProject = getStoredActiveProject()
+
+  if (!storedProject || !storedProject.id) {
+    showProjectsDrawer(route.path)
+  } else {
+    setActiveProject(storedProject)
+  }
+}
+
+const startApp = async () => {
+  checkAuth()
+  getActiveProject()
+}
+
+startApp()
 </script>
 
 <template>
@@ -38,11 +60,17 @@ checkAuth()
     <template v-if="!isInitializing && route.meta.requiresAuth">
       <Header
         class="max-w-6xl mx-auto"
-        :full="true" @logout="handleLogout" />
+        :full="true" />
 
-      <main class="w-full min-w-0 overflow-x-hidden p-6 md:pr-0">
+      <div class="flex min-w-0 max-w-full relative">
+        <ProjectDrawer v-if="renderProjectDrawer" />
+
+        <main class="flex-1 w-full min-w-0 overflow-x-hidden p-6 md:pr-0">
           <RouterView />
-      </main>
+        </main>
+
+        <SideBarText />
+      </div>
     </template>
 
     <RouterView v-else />

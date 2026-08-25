@@ -1,22 +1,33 @@
 <script setup lang="ts">
+import {watch } from 'vue';
+
 import LogForm from '@/components/Logger/Form/LogForm.vue';
 import LogTable from '@/components/Logger/Table/LogTable.vue';
 import LogFilters from '@/components/Logger/LogFilters.vue';
-import SideBarText from '@commons/SideBarText.vue';
 import CommonLoader from '@commons/CommonLoader.vue';
 
-
 import { logStore } from '@/store/logStore';
+import { projectStore } from '@/store/projectStore';
 
 import { useLog } from '@/composables/useLog';
 import { deleteFromArray, updateFromArray } from '@/utils/array';
 import type { Log } from '@/interfaces/Log';
 
 const { selectedLog, clearLog } = logStore
+const { activeProject } = projectStore
 const { loading, getLogs , logs, deleteLog } = useLog()
 
-getLogs()
+const fetchLogs = async () => {
+  if (!activeProject.value?.id) return
+  await getLogs(activeProject.value.id)
+}
 
+fetchLogs()
+
+watch(activeProject, () => {
+  clearLog()
+  fetchLogs()
+})
 
 const handleCreateLog = (log: Log) => {
   logs.value.push(log)
@@ -43,24 +54,20 @@ const handleDeleteLog = async (log: Log) => {
 <template>
   <div class="min-w-0 max-w-full">
     <CommonLoader v-if="loading"/>
-    <div class="flex min-w-0 max-w-full mt-2">
-      <div class="ms-20 me-3 flex-1 min-w-0 flex flex-col gap-4">
-        <LogForm
-          @create="handleCreateLog"
-          @update="handleUpdateLog"
+    <div class="min-w-0 max-w-full mt-2 ms-0 md:ms-20 me-3 flex flex-col gap-4">
+      <LogForm
+        @create="handleCreateLog"
+        @update="handleUpdateLog"
+        @delete="handleDeleteLog"
+      />
+
+      <div>
+        <LogFilters/>
+        <LogTable class="mt-4"
+          :logs="logs"
           @delete="handleDeleteLog"
         />
-
-        <div>
-          <LogFilters/>
-          <LogTable class="mt-4"
-            :logs="logs"
-            @delete="handleDeleteLog"
-          />
-        </div>
       </div>
-
-      <SideBarText />
     </div>
   </div>
 </template>

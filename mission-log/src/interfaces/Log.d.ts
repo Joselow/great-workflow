@@ -1,6 +1,7 @@
 export interface Log {
     id: string
     userId: number
+    projectId: string
     meetingId?: string | null
     typeMeetingLink?: number | null
 
@@ -16,6 +17,7 @@ export interface Log {
 
 export interface NewLog {
     id?: string,
+    projectId?: string
     description: string
     responsible: string
     tags: string

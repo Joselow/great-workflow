@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 
 import { logStore } from '@/store/logStore';
+import { errorToast } from '@/composables/useAlerts';
 
 
 
@@ -14,7 +15,10 @@ const comment = ref<string>('')
 let lastComment = ''
 
 const saveComment = async () => {
-  if (!comment.value || comment.value.trim() === lastComment.trim()) return
+  if (!comment.value || comment.value.trim() === lastComment.trim()) {
+    errorToast('No se puede guardar el mismo comentario o comentario vacío')
+    return
+  }
 
   emits('save', comment.value)
   lastComment = comment.value

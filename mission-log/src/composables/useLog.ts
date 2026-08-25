@@ -12,11 +12,12 @@ export function useLog() {
   const loading = ref(false)
   const logs: Ref<Log[]> = ref([])
 
-  const getLogs = async () => {
+  const getLogs = async (projectId?: string) => {  
     loading.value = true
 
     try {
-      const { data } = await apiApp.get('/log')
+      const params = projectId ? { projectId } : undefined
+      const { data } = await apiApp.get('/log', { params })
       console.log(data);
       logs.value = data
       return {
