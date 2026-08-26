@@ -31,3 +31,10 @@ export async function updateProject(id: string, userId: number, changes: Partial
 
     return project;
 }
+
+export async function deleteProject(id: string) {
+    const [project] = await db.delete(projects)
+        .where(eq(projects.id, id))
+        .returning();
+    return project;
+}

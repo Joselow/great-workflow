@@ -48,3 +48,12 @@ export const updateProject = async (req: Request, res: Response) => {
 
     return simpleSuccess(res, 200, project);
 };
+
+export const deleteProject = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const project = await projectService.deleteProject(id);
+    if (!project) {
+        throw new NotFoundError404('Project not found');
+    }
+    return simpleSuccess(res, 200, { message: 'Project deleted successfully' });
+};
