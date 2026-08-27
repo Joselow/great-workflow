@@ -3,24 +3,19 @@ import type { Request, Response } from "express";
 import * as logService from "../services/logService";
 
 import { getUserPayload } from "../helpers/authHelpers";
-import { BadRequestError400 } from "../errors/BadRequestError400";
 
 import { simpleSuccess } from "../utils/responses";
-import { verifyUUID } from "../validations/uuid";
 
 
 export const getLog = async (req: Request, res: Response) => {
   const user = getUserPayload(req)
   const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined
+  const completedQuery = req.query.completed
+  const completed = completedQuery === 'true' ? true : completedQuery === 'false' ? false : undefined
+  const from = typeof req.query.from === 'string' ? req.query.from : undefined
+  const to = typeof req.query.to === 'string' ? req.query.to : undefined
 
-  if (projectId) {
-    const validated = verifyUUID(projectId)
-    if (!validated.success) {
-      throw new BadRequestError400('Invalid projectId')
-    }
-  }
-
-  const logsData = await logService.getLog(user.id, projectId)
+  const logsData = await logService.getLog(user.id, { projectId, completed, from, to })
 
   return simpleSuccess(res, 200, logsData)
 }

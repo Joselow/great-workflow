@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted } from 'vue';
 import { RouterView, useRoute,    } from 'vue-router';
 
 import Header from './components/Header.vue';
@@ -16,7 +16,7 @@ import { useProject } from './composables/useProject';
 import { getAuthToken } from './utils/cookies';
 import FullScreenLoader from './commons/FullScreenLoader.vue';
 
-const { setActiveProject, renderProjectDrawer } = projectStore;
+const { setActiveProject, renderProjectDrawer, drawerOpen, closeDrawer } = projectStore;
 
 const route = useRoute();
 const { fetchMe, loading: isInitializing } = useAuth();
@@ -48,6 +48,47 @@ const startApp = async () => {
 }
 
 startApp()
+
+
+
+const isTypingTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+
+  const tag = target.tagName
+
+  return (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    target.isContentEditable
+  )
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (isTypingTarget(event.target)) return
+
+  const isShiftP =
+        event.shiftKey &&
+        event.key.toLowerCase() === 'p'
+
+  if (!isShiftP) return
+  event.preventDefault()
+
+  if (drawerOpen.value) {
+      closeDrawer()
+  } else {
+      showProjectsDrawer(route.path)
+  }
+}
+
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>

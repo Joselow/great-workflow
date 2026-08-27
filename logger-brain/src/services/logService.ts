@@ -1,18 +1,39 @@
-import { asc, and, eq } from "drizzle-orm";
+import { asc, and, eq, gte, isNull, lt, or } from "drizzle-orm";
 
 import { db } from '../db/index.js';
 import { logs, NewLog } from "../db/schemas/logs";
 
+interface LogListFilters {
+    projectId?: string
+    completed?: boolean
+    from?: string
+    to?: string
+}
 
-export async function getLog(userId: number, projectId?: string) {
-    const conditions = [eq(logs.userId, userId)];
+function startOfDay(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day)
+}
 
-    if (projectId) {
-        conditions.push(eq(logs.projectId, projectId));
-    }
+function startOfNextDay(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day + 1)
+}
+
+export async function getLog(userId: number, filters: LogListFilters = {}) {
+    const { projectId, completed, from, to } = filters
 
     const logsData = await db.select().from(logs)
-      .where(and(...conditions))
+      .where(and(
+        eq(logs.userId, userId),
+        projectId ? eq(logs.projectId, projectId) : undefined,
+        completed === true ? eq(logs.completed, true) : undefined,
+        completed === false
+          ? or(eq(logs.completed, false), isNull(logs.completed))
+          : undefined,
+        from ? gte(logs.createdAt, startOfDay(from)) : undefined,
+        to ? lt(logs.createdAt, startOfNextDay(to)) : undefined,
+      ))
       .orderBy(asc(logs.createdAt));
     return logsData
 }

@@ -43,12 +43,12 @@ const handleSelectLog = (log: Log) => {
     "
       :class="isSelected
         ? 'bg-brand-orange/25 dark:bg-brand-orange/20 border-brand-orange dark:border-brand-orange/70'
-        : 'border-black/30 dark:border-white/40 hover:border-black/60 dark:hover:border-white/60'"
+        : 'border-black/30 dark:border-white/20 hover:border-black/60 dark:hover:border-white/40'"
         @dblclick="handleSelectLog(log)"
     >
       <div class="flex min-w-0 items-center gap-3">
         <div class="flex min-w-0 flex-col gap-1">
-          <span class="truncate text-md font-medium text-gray-800 dark:text-gray-100">
+          <span class="truncate text-md font-medium text-gray-800 dark:text-gray-300">
             {{ log.description }}
           </span>
 

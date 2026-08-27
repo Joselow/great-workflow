@@ -3,30 +3,37 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ColorPicker from '@/components/Project/ColorPicker.vue'
+import ConfirmModal from '@/commons/ConfirmModal.vue'
 
 import { projectStore } from '@/store/projectStore'
 import { useProjectSelected } from '@/composables/useProjectSelected'
 import { useProject } from '@/composables/useProject'
 import { errorToast } from '@/composables/useAlerts'
+import { useShowStates } from '@/composables/useShowStates'
 
 import { debounce } from '@/utils/debounce'
 
 import type { PartialProject } from '@/interfaces/project'
 
-const { setStoredActiveProject } = useProjectSelected()
+const { setStoredActiveProject, clearStoredActiveProject } = useProjectSelected()
 
 const route = useRoute()
 const router = useRouter()
 
-const { saveDraft, getProjectById } = useProject()
+const { saveDraft, getProjectById, deleteProject, loading, showProjectsDrawer } = useProject()
 
 const {
   draftProject,
-  finishProjectSelection,
-  lastPersistedDraft,
   projects,
   startNewDraft,
+  activeProject,
 } = projectStore
+
+const { modalDelete, onModalDelete, offModalDelete } = useShowStates('modalDelete')
+
+const isCurrentSelected = computed(
+  () => Boolean(draftProject.value?.id && activeProject.value?.id === draftProject.value.id)
+)
 
 const  {  id: projectId } = route.params
 
@@ -64,16 +71,35 @@ const handleConfirmSelection = () => {
   const draft = draftProject.value
   if (!draft?.id) return
 
+  if (isCurrentSelected.value) {
+    clearStoredActiveProject()
+    return
+  }
 
   setStoredActiveProject({
-    id: draft.id!,
+    id: draft.id,
     name: draft.name!,
     color: draft.color!,
   })
+}
 
+const handleConfirmDelete = async () => {
+  const id = draftProject.value?.id
+  if (!id) return
 
-  const path = finishProjectSelection()
-  router.push(path)
+  const { success } = await deleteProject(id)
+  if (!success) return
+
+  const wasActive = activeProject.value?.id === id
+
+  draftProject.value = null
+  offModalDelete()
+  router.push({ name: 'home' })
+
+  if (wasActive) {
+    clearStoredActiveProject()
+    showProjectsDrawer('/')
+  }
 }
 
 watch(
@@ -91,7 +117,11 @@ watch(
     if (!current || !draftProject.value || !previous) return
 
 
-    if (draftProject.value.name !== previous[1] && !draftProject.value.name?.trim()) {
+    if (!previous[0] && !previous[1] && !draftProject.value?.id && !draftProject.value.name?.trim()) {
+      // errorToast('El nombre del proyecto es requerido')
+      return
+    }
+    if (draftProject.value.id && !draftProject.value.name?.trim()) {
       errorToast('El nombre del proyecto es requerido')
       return
     }
@@ -145,16 +175,62 @@ onMounted(() => {
 
       <ColorPicker v-model="draftProject.color!" />
 
-      <div class="pt-4">
+      <div class="pt-4 text-center">
         <button
           type="button"
-          class="cursor-pointer rounded-lg border-2 border-gray-900 dark:border-white bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 font-semibold px-6 py-2.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          class="cursor-pointer rounded-lg border-2 font-semibold px-6 py-2.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          :class="isCurrentSelected
+            ? 'border-brand-orange bg-transparent text-brand-orange hover:bg-brand-orange/10'
+            : 'border-brand-orange bg-brand-orange text-white hover:bg-brand-orange/80'"
           :disabled="!draftProject.id"
           @click="handleConfirmSelection"
         >
-          Seleccionar proyecto
+        <span class="material-symbols-outlined align-middle">
+          {{ isCurrentSelected ? 'remove_selection' : 'drag_click' }}
+        </span>
+          {{ isCurrentSelected ? 'Deseleccionar proyecto' : 'Seleccionar proyecto' }}
         </button>
       </div>
+
+
+      <template v-if="draftProject.id">
+        <ConfirmModal
+          v-model="modalDelete"
+          title="¿Eliminar este proyecto?"
+          :loading="loading"
+          @confirm="handleConfirmDelete"
+        >
+          <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+            Se eliminará el proyecto y no se puede deshacer.
+          </p>
+        </ConfirmModal>
+        <section
+          class="mt-10 pt-6 border-t border-rose-400 dark:border-white/10
+          
+          flex justify-between items-center flex-wrap
+          "
+        >
+          <div>
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              Zona de peligro
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Eliminar el proyecto de forma permanente.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="mt-4 cursor-pointer rounded-lg border border-brand-pink/90 bg-brand-pink/10 text-brand-pink hover:bg-brand-pink hover:text-white font-semibold px-6 py-2.5 transition-colors"
+            @click="onModalDelete"
+          >
+            <span class="material-symbols-outlined align-middle text-base">
+              delete
+            </span>
+            Eliminar proyecto
+          </button>
+        </section>
+      </template>
+
     </div>
   </div>
 </template>

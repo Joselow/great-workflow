@@ -21,13 +21,12 @@ const activeProject = ref<ActiveProject | null>(null)
 
 const renderProjectDrawer = ref(false)
 const drawerOpen = ref(false)
-const formMode = ref<'create' | 'edit' | null>(null)
 const returnPath = ref<string | null>(null)
 
 const lastPersistedDraft = ref<PartialProject>(startProject)
 
-const setActiveProject = (project: ActiveProject) => {
-  activeProject.value = {...project}
+const setActiveProject = (project: ActiveProject | null) => {
+  activeProject.value = project ? { ...project } : null
 }
 
 const openDrawer = (path?: string) => {
@@ -44,7 +43,6 @@ const closeDrawer = () => {
 const finishProjectSelection = () => {
   closeDrawer()
   draftProject.value = null
-  formMode.value = null
   lastPersistedDraft.value = startProject
 
   const path = returnPath.value ?? '/'
@@ -54,15 +52,12 @@ const finishProjectSelection = () => {
 
 
 const startNewDraft = (): PartialProject => {
-  formMode.value = 'create'
   lastPersistedDraft.value = {...startProject}
   draftProject.value = {...startProject} 
   return draftProject.value
 }
 
 const editDraft = (project: Project) => {
-  formMode.value = 'edit'
-
   const snapshot = toSnapshot(project)
   draftProject.value = snapshot
   lastPersistedDraft.value = {...snapshot}
@@ -76,7 +71,6 @@ export const useProjectStore = () => ({
   projects,
   activeProject,
   drawerOpen,
-  formMode,
   draftProject,
   returnPath,
   lastPersistedDraft,

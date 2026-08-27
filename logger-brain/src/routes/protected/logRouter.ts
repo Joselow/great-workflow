@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { storeLogRequestForm } from "../../middlewares/requestForm/logRequestForm";
+import { logQueryRequestForm, storeLogRequestForm } from "../../middlewares/requestForm/logRequestForm";
 import { uuidRequestForm } from "../../middlewares/requestForm/uuidRequestForm";
 
 import { getLog, createLog, updateLog, destroyLog } from "../../controllers/logController";
@@ -9,7 +9,7 @@ import { catchErrors } from "../../utils/catchErrors";
 
 export const logRouter = Router();
 
-logRouter.get('/',
+logRouter.get('/', [logQueryRequestForm],
     catchErrors(getLog)
 )
 

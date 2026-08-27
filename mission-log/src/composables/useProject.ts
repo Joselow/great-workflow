@@ -3,15 +3,18 @@ import apiApp from '@/utils/axios/apiApp'
 
 import { projectStore } from '@/store/projectStore'
 
-import type { Project, NewProject, PartialProject } from '@/interfaces/project'
-import type { ResponseComposables } from '@/interfaces/request'
-import { DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
+import { useProjectSelected } from '@/composables/useProjectSelected'
+
 import { snapshotsEqual, toSnapshot } from '@/helpers/snapshotProject'
-import { updateFromArray } from '@/utils/array'
+import { deleteFromArray, updateFromArray } from '@/utils/array'
+import { successToast } from '@/composables/useAlerts'
 
-const { projects, openDrawer, lastPersistedDraft, draftProject } = projectStore
+import type { ResponseComposables } from '@/interfaces/request'
+import type { Project, NewProject, PartialProject } from '@/interfaces/project'
 
+const { projects, openDrawer, lastPersistedDraft, draftProject, activeProject } = projectStore
 
+const { setStoredActiveProject } = useProjectSelected()
 
 
 export function useProject() {
@@ -71,6 +74,21 @@ export function useProject() {
     }
   }
 
+  const deleteProject = async (id: string): Promise<ResponseComposables<null>> => {
+    loading.value = true
+
+    try {
+      await apiApp.delete(`/project/${id}`)
+      projects.value = deleteFromArray(projects.value, id)
+      successToast('Proyecto eliminado')
+      return { success: true }
+    } catch {
+      return { success: false }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const showProjectsDrawer = async (routePath: string) => {
     openDrawer(routePath)
     
@@ -102,6 +120,17 @@ export function useProject() {
       if (success && data) {
           projects.value = updateFromArray(projects.value, data as Project)
           lastPersistedDraft.value = snapshot
+
+
+          console.log('data', data);
+          
+          if (activeProject.value?.id === draftProject.value?.id) {
+            activeProject.value = {
+              id: data.id,
+              name: data.name,
+              color: data.color,
+            }
+          }
         }
 
     } else {
@@ -112,11 +141,18 @@ export function useProject() {
       } 
     
       const { success, data } = await createProject(payload)
+
+      if (!projects.value.length && !activeProject.value) {
+        setStoredActiveProject({
+          id: data.id,
+          name: data.name,
+          color: data.color,
+        })
+      }
   
-      if (success && data) {
-        // projects.value.unshift(data)
-        draftProject.value!.id = data.id
-  
+      if (success && data && draftProject.value) {
+        projects.value.unshift(data)
+        draftProject.value.id = data.id
         lastPersistedDraft.value = toSnapshot(draftProject.value as PartialProject)
       }
     }
@@ -129,6 +165,7 @@ export function useProject() {
     getProjectById,
     createProject,
     updateProject,
+    deleteProject,
     showProjectsDrawer,
     saveDraft,
   }

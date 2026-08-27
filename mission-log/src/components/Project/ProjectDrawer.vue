@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { projectStore } from '@/store/projectStore'
 import { useProjectSelected } from '@/composables/useProjectSelected'
+import ProjectItemButton from '@/components/Project/ProjectItemButton.vue'
 
 import type { Project } from '@/interfaces/project'
 
@@ -20,6 +21,7 @@ const {
   closeDrawer,
   startNewDraft,
   editDraft,
+  draftProject,
   projects,
   activeProject,
 } = projectStore
@@ -30,12 +32,19 @@ const isProjectRoute = computed(
 
 const handleClose = () => {
   closeDrawer()
+
+  if (!isProjectRoute.value && !draftProject.value?.id) {
+    draftProject.value = null
+  }
 }
 
 const handleCreateClick = () => {
-  const draft = startNewDraft()
-  projects.value.unshift(draft as unknown as Project)
-  // saveDraft(draft as PartialProject)
+  if (draftProject.value && !draftProject.value.id) {
+    return
+  }
+
+  startNewDraft()
+
   router.push({ name: 'newProject' })
 }
 
@@ -48,11 +57,7 @@ const handleSelectProject = (project: Project) => {
 }
 
 const isSelected = (projectId: string) => {
-  if (!projectId) {
-    return projectStore.formMode.value === 'create'
-  }
-
-  return route.name === 'editProject' && route.params.id === projectId
+  return route.params.id === projectId
 }
 
 const isActive = (project: Project) => activeProject.value?.id === project.id
@@ -89,7 +94,7 @@ const handleDoubleClick = (project: Project) => {
 <template>
   <aside
     v-show="drawerOpen"
-    class="shrink-0 flex flex-col w-40 sm:w-52 md:w-72
+    class="shrink-0 flex flex-col w-60 sm:w-52 md:w-72
       bg-white dark:bg-[#111] border-r border-black/10 dark:border-white/10
       shadow-xl md:shadow-none overflow-hidden"
     :class="isProjectRoute
@@ -118,51 +123,24 @@ const handleDoubleClick = (project: Project) => {
         + Crear
       </button>
 
-      <button
+
+      <ProjectItemButton
+        v-if="draftProject && !draftProject.id"
+        :project="draftProject"
+        :selected="true"
+        @select="()=> router.push({ name: 'newProject' })"
+        @activate="()=> router.push({ name: 'newProject' })"
+      />
+
+      <ProjectItemButton
         v-for="project in projects"
         :key="project.id"
-        type="button"
-        class="w-full cursor-pointer rounded-lg border overflow-hidden px-3 py-2 text-left transition-colors"
-        :class="{
-          'border-brand-orange/60 bg-brand-orange/10': isSelected(project.id),
-          'border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5':
-            !isSelected(project.id) && !isActive(project),
-        }"
-        :style="itemStyle(project)"
-        @dblclick="handleDoubleClick(project)"
-      >
-        <div class="flex justify-between items-center">
-          <div class="flex items-center gap-2 min-w-0">
-            <span
-              class="w-4 h-4 rounded-md shrink-0 border border-black/10"
-              :style="{ backgroundColor: project.color }"
-            />
-            <span class="truncate text-sm font-medium"
-              :class="
-              !project.id
-              ? 'text-gray-400 dark:text-gray-400' 
-              : 'text-gray-800 dark:text-gray-100'"
-            >
-              {{ project.name || 'Nuevo Proyecto' }}
-            </span>
-          </div>
-          <div>
-            <button
-              type="button"
-              class="cursor-pointer text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-1 rounded-md
-                hover:scale-112 transition-transform duration-200
-              "
-              @click="handleSelectProject(project)"
-            >
-            <span
-              style="font-size: 22px;"
-              class="material-symbols-outlined align-middle">
-              expand_circle_right
-              </span>
-            </button>
-          </div>
-        </div>
-      </button>
+        :project="project"
+        :selected="isSelected(project.id)"
+        :item-style="itemStyle(project)"
+        @select="handleSelectProject(project)"
+        @activate="handleDoubleClick(project)"
+      />
 
       <p
         v-if="projects.length === 0"

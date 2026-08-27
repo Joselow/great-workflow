@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import LogForm from '@/components/Logger/Form/LogForm.vue';
 import LogTable from '@/components/Logger/Table/LogTable.vue';
@@ -10,31 +10,99 @@ import { logStore } from '@/store/logStore';
 import { projectStore } from '@/store/projectStore';
 
 import { useLog } from '@/composables/useLog';
+import { errorToast } from '@/composables/useAlerts';
 import { deleteFromArray, updateFromArray } from '@/utils/array';
+import {
+  defaultPeriod,
+  isValidInclusiveRange,
+  logMatchesFilters,
+  weekCountForMonth,
+  weekForMonthChange,
+  weekRangeForMonth,
+} from '@/helpers/logPeriod';
 import type { Log } from '@/interfaces/Log';
 
 const { selectedLog, clearLog } = logStore
 const { activeProject } = projectStore
 const { loading, getLogs , logs, deleteLog } = useLog()
 
+const initialPeriod = defaultPeriod()
+const initialRange = weekRangeForMonth(initialPeriod.month, initialPeriod.week)
+const selectedMonth = ref(initialPeriod.month)
+const selectedWeek = ref(initialPeriod.week)
+const statusFilter = ref<boolean | null>(null)
+const advancedDates = ref(false)
+const customFrom = ref(initialRange.from)
+const customTo = ref(initialRange.to)
+
+const weekCount = weekCountForMonth()
+const period = computed(() => {
+  if (advancedDates.value) {
+    return { from: customFrom.value, to: customTo.value }
+  }
+  return weekRangeForMonth(selectedMonth.value, selectedWeek.value)
+})
+
+const activeFilters = computed(() => ({
+  from: period.value.from,
+  to: period.value.to,
+  ...(statusFilter.value !== null ? { completed: statusFilter.value } : {}),
+}))
+
 const fetchLogs = async () => {
   if (!activeProject.value?.id) return
-  await getLogs(activeProject.value.id)
+  if (!isValidInclusiveRange(period.value.from, period.value.to)) return
+  await getLogs(activeProject.value.id, activeFilters.value)
 }
 
-fetchLogs()
+const handleMonthUpdate = (month: string) => {
+  selectedMonth.value = month
+  selectedWeek.value = weekForMonthChange(month)
+}
+
+const handleAdvancedUpdate = (value: boolean) => {
+  if (value) {
+    const range = weekRangeForMonth(selectedMonth.value, selectedWeek.value)
+    customFrom.value = range.from
+    customTo.value = range.to
+  }
+  advancedDates.value = value
+}
+
+const handleDateUpdate = (field: 'from' | 'to', value: string) => {
+  if (field === 'from') customFrom.value = value
+  else customTo.value = value
+
+  if (!customFrom.value || !customTo.value) return
+  if (customFrom.value > customTo.value) {
+    errorToast('La fecha de inicio no puede ser posterior a la fecha fin')
+  }
+}
 
 watch(activeProject, () => {
   clearLog()
-  fetchLogs()
 })
 
+watch(
+  [activeProject, statusFilter, period, advancedDates],
+  () => {
+    fetchLogs()
+  },
+  { immediate: true },
+)
+
 const handleCreateLog = (log: Log) => {
-  logs.value.push(log)
+  if (logMatchesFilters(log, { ...period.value, completed: statusFilter.value })) {
+    logs.value.push(log)
+  }
 }
 
 const handleUpdateLog = (log: Log) => {
-  logs.value = updateFromArray(logs.value, log)
+  if (logMatchesFilters(log, { ...period.value, completed: statusFilter.value })) {
+    logs.value = updateFromArray(logs.value, log)
+  } else {
+    logs.value = deleteFromArray(logs.value, log.id)
+  }
 }
 
 const handleDeleteLog = async (log: Log) => {
@@ -62,7 +130,22 @@ const handleDeleteLog = async (log: Log) => {
       />
 
       <div>
-        <LogFilters/>
+        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Filtros</h4>
+        <LogFilters
+          :month="selectedMonth"
+          :week="selectedWeek"
+          :week-count="weekCount"
+          :status="statusFilter"
+          :advanced="advancedDates"
+          :from-date="customFrom"
+          :to-date="customTo"
+          @update:month="handleMonthUpdate"
+          @update:week="selectedWeek = $event"
+          @update:status="statusFilter = $event"
+          @update:advanced="handleAdvancedUpdate"
+          @update:fromDate="handleDateUpdate('from', $event)"
+          @update:toDate="handleDateUpdate('to', $event)"
+        />
         <LogTable class="mt-4"
           :logs="logs"
           @delete="handleDeleteLog"

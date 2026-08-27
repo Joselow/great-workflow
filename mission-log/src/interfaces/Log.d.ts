@@ -26,4 +26,10 @@ export interface NewLog {
     comment?: string | null
 }
 
+export interface LogListFilters {
+    completed?: boolean
+    from?: string
+    to?: string
+}
+
 export type PartialLog = Partial<Log>;

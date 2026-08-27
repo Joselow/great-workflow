@@ -33,6 +33,7 @@ export function useProjectSelected() {
 
   const clearStoredActiveProject = (): void => {
     clearStoredData(STORAGE_KEY)
+    setActiveProject(null)
   }
 
   return {

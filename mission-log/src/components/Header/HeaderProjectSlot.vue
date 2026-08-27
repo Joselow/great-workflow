@@ -3,44 +3,69 @@ import { useRoute } from 'vue-router'
 
 import { projectStore } from '@/store/projectStore'
 import { useProject } from '@/composables/useProject'
+import { useProjectSelected } from '@/composables/useProjectSelected'
 
 const route = useRoute()
 const { activeProject } = projectStore
 
 const { showProjectsDrawer } = useProject()
+const { clearStoredActiveProject } = useProjectSelected()
 
 const handleClick = () => {
   showProjectsDrawer(route.fullPath)
 }
+
+const handleDeselect = () => {
+  clearStoredActiveProject()
+}
 </script>
 
 <template>
-  <button
-    type="button"
-    class="cursor-pointer transition-all hover:opacity-90"
-    @click="handleClick"
-  >
+  <div class="inline-flex items-center min-w-0">
     <span
       v-if="activeProject"
-      class="inline-flex items-center gap-2 max-w-[14rem] sm:max-w-xs px-4 py-1.5 rounded-lg text-sm font-semibold border shadow-sm truncate"
+      class="inline-flex items-center gap-1 max-w-[16rem] sm:max-w-xs pl-4 pr-1.5 py-1 rounded-lg text-sm font-semibold border shadow-sm"
       :style="{
         backgroundColor: activeProject.color,
         borderColor: `${activeProject.color}99`,
         color: '#1f2937',
       }"
     >
-      <span
-        class="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10"
-        :style="{ backgroundColor: activeProject.color }"
-      />
-      <span class="truncate">{{ activeProject.name }}</span>
+      <button
+        type="button"
+        class="cursor-pointer truncate min-w-0 hover:opacity-80 px-4"
+        @click="handleClick"
+      >
+      <span  
+      style="font-size: 1.2rem;"
+      class="material-symbols-outlined align-middle">
+rocket_launch
+</span>
+        {{ activeProject.name }}
+      </button>
+      <button
+        type="button"
+        class="cursor-pointer text-red-700 shrink-0 rounded-md p-0.5 bg-black/10 hover:bg-black/20 transition-colors"
+        title="Deseleccionar proyecto"
+        @click="handleDeselect"
+      >
+        <span class=" material-symbols-outlined align-middle text-lg"
+        style="font-size: 1.3rem;"
+
+        >
+          remove_selection
+        </span>
+      </button>
     </span>
 
-    <span
+    <button
       v-else
-      class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-orange dark:hover:text-brand-orange underline-offset-4 hover:underline"
+      type="button"
+      class="cursor-pointer text-sm text-gray-500 dark:text-gray-400 hover:text-brand-orange dark:hover:text-brand-orange underline-offset-4 hover:underline"
+      @click="handleClick"
     >
       Seleccionar o crear proyecto
-    </span>
-  </button>
+    </button>
+  </div>
 </template>
+

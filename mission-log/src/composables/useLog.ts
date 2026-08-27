@@ -1,7 +1,7 @@
 import { ref, type Ref } from 'vue'
 import apiApp from '@/utils/axios/apiApp'
 
-import type { NewLog, Log, PartialLog } from '@/interfaces/Log'
+import type { NewLog, Log, PartialLog, LogListFilters } from '@/interfaces/Log'
 import type { ResponseComposables } from '@/interfaces/request'
 
 
@@ -12,11 +12,15 @@ export function useLog() {
   const loading = ref(false)
   const logs: Ref<Log[]> = ref([])
 
-  const getLogs = async (projectId?: string) => {  
+  const getLogs = async (projectId?: string, filters?: LogListFilters) => {  
     loading.value = true
 
     try {
-      const params = projectId ? { projectId } : undefined
+      const params: Record<string, string> = {}
+      if (projectId) params.projectId = projectId
+      if (filters?.completed !== undefined) params.completed = String(filters.completed)
+      if (filters?.from) params.from = filters.from
+      if (filters?.to) params.to = filters.to
       const { data } = await apiApp.get('/log', { params })
       console.log(data);
       logs.value = data
