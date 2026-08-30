@@ -106,7 +106,7 @@ onUnmounted(() => {
       <div class="flex min-w-0 max-w-full relative">
         <ProjectDrawer v-if="renderProjectDrawer" />
 
-        <main class="flex-1 w-full min-w-0 overflow-x-hidden p-6 md:pr-0">
+        <main class="flex-1 w-full min-w-0 p-6 md:pr-0">
           <RouterView />
         </main>
 

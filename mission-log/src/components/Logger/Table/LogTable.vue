@@ -16,9 +16,9 @@ const emits = defineEmits<{
 </script>
 
 <template>
-    <div class="flex flex-col gap-1.5">
+    <div class="flex flex-col gap-1.5 max-h-[100vh] min-w-0 overflow-y-auto overflow-x-hidden">
       <template v-if="!logs.length">
-        <EmptyRecords message="Aún no hay registros" />
+        <EmptyRecords class="mt-10" message="Aún no hay registros" />
       </template>
       <template v-else>
         <LogItem

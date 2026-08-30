@@ -16,89 +16,78 @@ import {
   defaultPeriod,
   isValidInclusiveRange,
   logMatchesFilters,
-  weekCountForMonth,
   weekForMonthChange,
   weekRangeForMonth,
 } from '@/helpers/logPeriod';
-import type { Log } from '@/interfaces/Log';
+import type { Log, LogViewFilters } from '@/interfaces/Log';
 
 const { selectedLog, clearLog } = logStore
 const { activeProject } = projectStore
 const { loading, getLogs , logs, deleteLog } = useLog()
 
-const initialPeriod = defaultPeriod()
-const initialRange = weekRangeForMonth(initialPeriod.month, initialPeriod.week)
-const selectedMonth = ref(initialPeriod.month)
-const selectedWeek = ref(initialPeriod.week)
-const statusFilter = ref<boolean | null>(null)
-const advancedDates = ref(false)
-const customFrom = ref(initialRange.from)
-const customTo = ref(initialRange.to)
+const createInitialFilters = (): LogViewFilters => {
+  const { month, week } = defaultPeriod()
+  const range = weekRangeForMonth(month, week)
 
-const weekCount = weekCountForMonth()
-const period = computed(() => {
-  if (advancedDates.value) {
-    return { from: customFrom.value, to: customTo.value }
+  return {
+    month,
+    week,
+    status: null,
+    advanced: false,
+    from: range.from,
+    to: range.to,
   }
-  return weekRangeForMonth(selectedMonth.value, selectedWeek.value)
-})
+}
+
+const filters = ref<LogViewFilters>(createInitialFilters())
 
 const activeFilters = computed(() => ({
-  from: period.value.from,
-  to: period.value.to,
-  ...(statusFilter.value !== null ? { completed: statusFilter.value } : {}),
+  from: filters.value.from,
+  to: filters.value.to,
+  ...(filters.value.status !== null ? { completed: filters.value.status } : {}),
 }))
 
 const fetchLogs = async () => {
   if (!activeProject.value?.id) return
-  if (!isValidInclusiveRange(period.value.from, period.value.to)) return
+  if (!isValidInclusiveRange(filters.value.from, filters.value.to)) return
   await getLogs(activeProject.value.id, activeFilters.value)
 }
 
-const handleMonthUpdate = (month: string) => {
-  selectedMonth.value = month
-  selectedWeek.value = weekForMonthChange(month)
-}
+const handleFiltersUpdate = (next: LogViewFilters) => {
+  const prev = filters.value
 
-const handleAdvancedUpdate = (value: boolean) => {
-  if (value) {
-    const range = weekRangeForMonth(selectedMonth.value, selectedWeek.value)
-    customFrom.value = range.from
-    customTo.value = range.to
+  if (next.month !== prev.month) {
+    next = { ...next, week: weekForMonthChange(next.month) }
   }
-  advancedDates.value = value
-}
 
-const handleDateUpdate = (field: 'from' | 'to', value: string) => {
-  if (field === 'from') customFrom.value = value
-  else customTo.value = value
+  if (!next.advanced || (next.advanced && !prev.advanced)) {
+    const range = weekRangeForMonth(next.month, next.week)
+    next = { ...next, from: range.from, to: range.to }
+  }
 
-  if (!customFrom.value || !customTo.value) return
-  if (customFrom.value > customTo.value) {
+  if (next.advanced && next.from && next.to && next.from > next.to) {
     errorToast('La fecha de inicio no puede ser posterior a la fecha fin')
   }
+
+  filters.value = next
 }
 
-watch(activeProject, () => {
-  clearLog()
-})
-
 watch(
-  [activeProject, statusFilter, period, advancedDates],
+  [activeProject, filters],
   () => {
     fetchLogs()
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 )
 
 const handleCreateLog = (log: Log) => {
-  if (logMatchesFilters(log, { ...period.value, completed: statusFilter.value })) {
+  if (logMatchesFilters(log, { ...activeFilters.value, completed: filters.value.status })) {
     logs.value.push(log)
   }
 }
 
 const handleUpdateLog = (log: Log) => {
-  if (logMatchesFilters(log, { ...period.value, completed: statusFilter.value })) {
+  if (logMatchesFilters(log, { ...activeFilters.value, completed: filters.value.status })) {
     logs.value = updateFromArray(logs.value, log)
   } else {
     logs.value = deleteFromArray(logs.value, log.id)
@@ -120,9 +109,9 @@ const handleDeleteLog = async (log: Log) => {
 </script>
 
 <template>
-  <div class="min-w-0 max-w-full">
+  <div class="min-w-0 max-w-full overflow-x-hidden">
     <CommonLoader v-if="loading"/>
-    <div class="min-w-0 max-w-full mt-2 ms-0 md:ms-20 me-3 flex flex-col gap-4">
+    <div class="min-w-0 max-w-full overflow-x-hidden mt-2 ms-0 md:ms-20 me-3 flex flex-col gap-4">
       <LogForm
         @create="handleCreateLog"
         @update="handleUpdateLog"
@@ -130,21 +119,12 @@ const handleDeleteLog = async (log: Log) => {
       />
 
       <div>
-        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Filtros</h4>
+        <h5 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          Filtros
+        </h5>
         <LogFilters
-          :month="selectedMonth"
-          :week="selectedWeek"
-          :week-count="weekCount"
-          :status="statusFilter"
-          :advanced="advancedDates"
-          :from-date="customFrom"
-          :to-date="customTo"
-          @update:month="handleMonthUpdate"
-          @update:week="selectedWeek = $event"
-          @update:status="statusFilter = $event"
-          @update:advanced="handleAdvancedUpdate"
-          @update:fromDate="handleDateUpdate('from', $event)"
-          @update:toDate="handleDateUpdate('to', $event)"
+          :filters="filters"
+          @update="handleFiltersUpdate"
         />
         <LogTable class="mt-4"
           :logs="logs"

@@ -38,7 +38,7 @@ const handleSelectLog = (log: Log) => {
 </script>
 
 <template>
-    <div class="cursor-pointer group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
+    <div class="cursor-pointer group flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-1 px-3 py-2 transition-colors duration-100
       shadow-lg
     "
       :class="isSelected

@@ -25,6 +25,12 @@ const { modalDelete, onModalDelete, offModalDelete } = useShowStates('modalDelet
 
 const handleSelect = () => {
   selectLog(props.log)
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+});
+
 }
 
 const handleInfo = () => {

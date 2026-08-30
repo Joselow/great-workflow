@@ -17,12 +17,14 @@ export function useLog() {
 
     try {
       const params: Record<string, string> = {}
+
       if (projectId) params.projectId = projectId
+
       if (filters?.completed !== undefined) params.completed = String(filters.completed)
       if (filters?.from) params.from = filters.from
       if (filters?.to) params.to = filters.to
+
       const { data } = await apiApp.get('/log', { params })
-      console.log(data);
       logs.value = data
       return {
         success: true,

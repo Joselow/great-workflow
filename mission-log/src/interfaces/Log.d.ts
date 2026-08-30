@@ -32,4 +32,13 @@ export interface LogListFilters {
     to?: string
 }
 
+export interface LogViewFilters {
+    month: string
+    week: number
+    status: boolean | null
+    advanced: boolean
+    from: string
+    to: string
+}
+
 export type PartialLog = Partial<Log>;
