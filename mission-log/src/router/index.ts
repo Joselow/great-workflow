@@ -30,8 +30,26 @@ const routes = [
   {
     path: '/cards',
     name: 'cards',
-    component: () => import('@/views/logs/LogsView.vue'),
+    component: () => import('@/views/cards/CardsView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/cards/new',
+    name: 'newCard',
+    component: () => import('@/views/cards/CardFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/cards/:id',
+    name: 'editCard',
+    component: () => import('@/views/cards/CardFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/c/:id',
+    name: 'publicCard',
+    component: () => import('@/views/cards/CardPublicView.vue'),
+    meta: { requiresAuth: false },
   },
   {
     path: '/projects/new',

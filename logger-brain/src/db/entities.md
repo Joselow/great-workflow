@@ -54,3 +54,5 @@ description varchar
 color varchar
 timestamps
 is_prompt
+fl_meeting
+

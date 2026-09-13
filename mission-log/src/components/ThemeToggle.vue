@@ -6,6 +6,12 @@ import { onMounted, ref } from 'vue'
 type ThemeSetting = 'light' | 'dark' | 'system'
 const THEME_KEY = 'theme' as const
 
+const props = withDefaults(defineProps<{
+  single?: boolean
+}>(), {
+  single: false,
+})
+
 const currentTheme = ref<ThemeSetting>('system')
 
 const applySystemTheme = () => {
@@ -35,16 +41,34 @@ const setTheme = (newTheme: ThemeSetting) => {
   localStorage.setItem(THEME_KEY, newTheme)
 }
 
-onMounted(() => {    
-    document.documentElement.classList.toggle("dark",
-        localStorage.theme === "dark" ||
-        (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    );
+const toggleTheme = () => {
+  setTheme(currentTheme.value === 'dark' ? 'light' : 'dark')
+}
+
+onMounted(() => {
+    const stored = localStorage.getItem(THEME_KEY)
+    const isDark =
+        stored === 'dark' ||
+        (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+    currentTheme.value = isDark ? 'dark' : 'light'
+    document.documentElement.classList.toggle('dark', isDark)
 });
 </script>
 
 <template>
+  <button
+    v-if="props.single"
+    type="button"
+    class="cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white/80 text-sm shadow-sm dark:border-white/15 dark:bg-white/10 dark:text-white"
+    :title="currentTheme === 'dark' ? 'Modo claro' : 'Modo oscuro'"
+    @click="toggleTheme"
+  >
+    {{ currentTheme === 'dark' ? '☀️' : '🌙' }}
+  </button>
+
   <div
+    v-else
     class="inline-flex overflow-hidden rounded-full border border-black/5 bg-white/70 text-xs shadow-sm
             dark:border-white/10 dark:bg-white/5"
   >

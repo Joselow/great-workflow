@@ -3,6 +3,7 @@ import { Router } from "express";
 import healthRouter from "./health";
 import { authRouter } from "./authRouter";
 import { protectedRouter } from "./protected";
+import { publicCardRouter } from "./public/cardRouter.js";
 import { requireAuth } from "../middlewares/security/auth";
 
 export const router = Router();
@@ -10,6 +11,7 @@ export const router = Router();
 
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);
+router.use("/public/card", publicCardRouter);
 router.use('/app', requireAuth, protectedRouter)
 
 router.use('/', (req, res) => {

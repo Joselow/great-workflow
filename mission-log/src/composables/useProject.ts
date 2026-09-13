@@ -142,7 +142,7 @@ export function useProject() {
     
       const { success, data } = await createProject(payload)
 
-      if (!projects.value.length && !activeProject.value) {
+      if (!projects.value.length && !activeProject.value && data) {
         setStoredActiveProject({
           id: data.id,
           name: data.name,
