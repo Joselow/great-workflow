@@ -7,6 +7,10 @@ import { authStore } from '../store/authStore'
 import type { LoginCredentials, LoginResponse, RegisterCredentials, User } from '../interfaces/auth'
 
 export function useAuth() {
+  console.log('useAuth');
+  console.count();
+
+  
   const route = '/auth'
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -60,6 +64,8 @@ export function useAuth() {
   }
 
   const fetchMe = async (): Promise<boolean> => {
+    if (authStore.getUser()) return true
+
     const token = getAuthToken()
     if (!token) return false
 
@@ -67,10 +73,9 @@ export function useAuth() {
 
     try {
       const { data } = await api.get<User>(route+'/me')
-      const userData = data
-      authStore.setUser(userData)
+      authStore.setUser(data)
       return true
-    } catch (err) {
+    } catch {
       deleteAuthToken()
       authStore.setLogout()
       return false

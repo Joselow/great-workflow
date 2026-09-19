@@ -76,3 +76,10 @@ export interface CardListFilters {
 }
 
 export type CardListProjectFilter = 'all' | 'null' | string
+
+export interface CardListViewFilters {
+  projectFilter: CardListProjectFilter
+  q: string
+  isPrompt: boolean
+  flMeeting: boolean
+}

@@ -25,14 +25,14 @@ const selectValue = computed({
 
 <template>
   <label
-    class="inline-flex w-auto max-w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold text-gray-800 dark:text-gray-100"
+    class="inline-flex w-auto max-w-fit items-center gap-2 rounded-md border px-3 py-1 text-xs font-semibold text-gray-800 dark:text-gray-100"
     :style="{
       backgroundColor: `${selectedColor}33`,
       borderColor: `${selectedColor}99`,
     }"
   >
     <span
-      class="h-2.5 w-2.5 shrink-0 rounded-full"
+      class="h-2.5 w-2.5 shrink-0 rounded-md"
       :style="{ backgroundColor: selectedColor }"
     />
     <select

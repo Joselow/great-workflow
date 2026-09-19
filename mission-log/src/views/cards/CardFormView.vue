@@ -184,31 +184,17 @@ watch(
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div class="flex items-center gap-2">
         <CardProjectSelect v-model="draft.projectId" :projects="projects" />
-        <button
-          v-if="draft.id"
-          type="button"
-          class="cursor-pointer bg-brand-orange w-auto rounded-lg 
-          border border-brand-orange/60 dark:border-white/15 px-6 py-1 text-xs font-semibold uppercase tracking-wide 
-          text-white  hover:bg-brand-orange/80"
-          @click="openPublicCard"
-        >
-          Ver
-          <span class="material-symbols-outlined align-middle" style="font-size: 1rem;">
-          open_in_new
-          </span>
-        </button>
-      </div>
+        <div class="flex w-auto shrink-0 items-center gap-2">
       
-
-      <div class="flex w-auto shrink-0 items-center gap-2">
         <button
           type="button"
           class="cursor-pointer w-auto rounded-lg border px-6 py-1 text-xs font-semibold uppercase tracking-wide transition-colors"
           :class="draft.isPrompt
-            ? 'border-emerald-500/70 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-            : 'border-black/10 dark:border-white/15 text-gray-500 dark:text-gray-400 hover:border-emerald-500/40'"
+           ? 'border-emerald-500/70 bg-emerald-500 text-white'
+        : 'bg-white border-black/10 dark:border-white/15 dark:bg-white/4 text-gray-500 dark:text-gray-200 hover:border-emerald-500/40'"
           @click="setPrompt(!draft.isPrompt)"
         >
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">inbox_text_asterisk</span>
           Prompt
         </button>
 
@@ -216,13 +202,36 @@ watch(
           type="button"
           class="cursor-pointer w-auto rounded-lg border px-6 py-1 text-xs font-semibold uppercase tracking-wide transition-colors"
           :class="draft.flMeeting
-            ? 'border-brand-orange/60 bg-brand-orange/20 text-brand-orange dark:text-white'
-            : 'border-black/10 dark:border-white/15 text-gray-500 dark:text-gray-400 hover:border-brand-orange/40'"
+          ? 'border-brand-orange/60 bg-brand-orange text-white'
+        : 'bg-white border-black/10 dark:border-white/15  dark:bg-white/4 text-gray-500 dark:text-gray-200 hover:border-brand-orange/40'"
           @click="draft.flMeeting = !draft.flMeeting"
         >
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">co_present</span>
           Meeting
         </button>
 
+     
+      </div>
+      </div>
+      
+
+      <div class="flex w-auto shrink-0 items-center gap-2">
+        <button
+          v-if="draft.id"
+          type="button"
+          class="cursor-pointer bg-red-500/5 w-auto rounded-lg 
+            hover:bg-red-500/10 text-rose-600
+            hover:scale-105 transition-all duration-100
+            border border-rose-500/60 dark:border-white/15 px-6 py-1 text-xs font-semibold uppercase tracking-wide 
+            dark:text-white  dark:hover:bg-rose-500/40"
+          @click="openPublicCard"
+        >
+          <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+            share_reviews
+          </span>
+          Compartir
+        </button>
+      
      
       </div>
     </div>
@@ -268,7 +277,10 @@ watch(
           }"
           @click="handleSaveClick"
         >
-          Guardar Card
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+save
+</span>
+          Guardar 
         </button>
       </div>
     </div>

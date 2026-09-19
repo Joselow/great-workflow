@@ -56,7 +56,7 @@ watch(() => sections.value.length, fitSectionTextareas, { immediate: true })
       />
       <textarea
         :value="section.description"
-        rows="2"
+        rows="1"
         placeholder="Descripción..."
         class="mt-2 w-full min-h-16 resize-y overflow-hidden bg-transparent text-sm text-gray-600 dark:text-gray-300 placeholder:text-gray-400 border-0 focus:outline-none"
         @input="(event) => {
@@ -105,7 +105,7 @@ watch(() => sections.value.length, fitSectionTextareas, { immediate: true })
       <button
         type="button"
         class="cursor-pointer inline-flex items-center justify-center 
-        rounded-md border  text-emerald-500 
+        rounded-md border  text-emerald-700 
         bg-emerald-500/25  h-8 px-6
         border-emerald-500/40
         dark:border-emerald-500/10 

@@ -50,13 +50,13 @@ onMounted(async () => {
 
     <article
       v-else-if="card"
-      class="w-full max-w-3xl rounded-2xl border p-6 md:p-10"
+      class="w-full max-w-3xl rounded-2xl border p-6 md:p-10 min-h-100"
       :style="cardSurfaceStyle(card.color)"
     >
       <div class="flex flex-wrap items-center gap-2 mb-6">
         <span
           v-if="card.project"
-          class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold text-gray-800 dark:text-gray-100"
+          class="inline-flex items-center gap-2 rounded-md border px-6 py-1 text-xs font-semibold text-gray-800 dark:text-gray-100"
           :style="{
             backgroundColor: `${card.project.color}33`,
             borderColor: `${card.project.color}99`,
@@ -71,15 +71,17 @@ onMounted(async () => {
 
         <span
           v-if="card.isPrompt"
-          class="rounded-full border border-emerald-500/70 bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+          class="rounded-md border border-emerald-500/70 bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
         >
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">inbox_text_asterisk</span>
           Prompt
         </span>
 
         <span
           v-if="card.flMeeting"
-          class="rounded-full border border-brand-orange/60 bg-brand-orange/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-orange dark:text-white"
+          class="rounded-md border border-brand-orange/60 bg-brand-orange/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-500 dark:text-white"
         >
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">co_present</span>
           Meeting
         </span>
       </div>

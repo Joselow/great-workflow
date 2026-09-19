@@ -57,7 +57,6 @@ const handleSelectProject = (project: Project) => {
 }
 
 const isSelected = (projectId: string) => {
-  console.log(route.params.id, projectId);
   
   return route.params.id === projectId
 }
@@ -76,7 +75,7 @@ const withAlpha = (hex: string, alpha: string) => {
 }
 
 const itemStyle = (project: Project) => {
-  console.log(project.name, isSelected(project.id), isActive(project), project.color);
+  //console.log(project.name, isSelected(project.id), isActive(project), project.color);
   
   if (!isActive(project) || !project.color) return undefined
 

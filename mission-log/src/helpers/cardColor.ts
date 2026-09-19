@@ -15,7 +15,7 @@ const lightEdge = {
 }
 
 export const cardSurfaceStyle = (color: string) => ({
-  backgroundColor: `${color}04`,
+  backgroundColor: `${color}05`,
   borderColor: isLightHex(color) ? lightEdge.borderColor : `${color}40`,
   boxShadow: isLightHex(color) ? lightEdge.boxShadow : undefined,
 })

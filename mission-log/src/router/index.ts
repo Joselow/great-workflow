@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { getAuthToken } from '@/utils/cookies'
+import { authGuard } from '@/guards/authGuard'
+import { projectGuard } from '@/guards/projectGuard'
 
 const routes = [
   {
@@ -46,7 +47,7 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/c/:id',
+    path: '/share-data/:id',
     name: 'publicCard',
     component: () => import('@/views/cards/CardPublicView.vue'),
     meta: { requiresAuth: false },
@@ -76,16 +77,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
-  const isAuthenticated = Boolean(getAuthToken())
-
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    return { name: 'login' }
-  }
-
-  if (to.meta.guestOnly && isAuthenticated) {
-    return { name: 'home' }
-  }
-})
+router.beforeEach(authGuard)
+router.beforeEach(projectGuard)
 
 export default router

@@ -20,10 +20,17 @@ const emit = defineEmits<{
   >
     <button
       type="button"
-      class="absolute top-3 right-3 z-10 cursor-pointer rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-zinc-900/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-200 hover:border-brand-orange/50"
+      class="absolute top-3 right-3 z-10 cursor-pointer rounded-lg border border-black/10 dark:border-white/15 
+      bg-white/50 dark:bg-zinc-900/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-200 
+      hover:bg-white/90 dark:hover:bg-zinc-900/80
+      hover:scale-105 transition-all duration-100
+
+      "
       @click.stop="emit('view', props.card.id)"
     >
-      Ver
+    <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+          share_reviews
+        </span>
     </button>
 
     <button
@@ -34,15 +41,21 @@ const emit = defineEmits<{
       <div class="mb-3 flex flex-wrap gap-1.5 pr-12">
         <span
           v-if="card.isPrompt"
-          class="rounded-full border border-emerald-500/70 bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+          class="rounded-md border border-emerald-500/70 bg-emerald-500 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
         >
-          Prompt
+          <!-- Prompt -->
+          <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+inbox_text_asterisk
+</span>
         </span>
         <span
           v-if="card.flMeeting"
-          class="rounded-full border border-brand-orange/60 bg-brand-orange/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-orange dark:text-white"
+          class="rounded-md border border-brand-orange/60 bg-brand-orange px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
         >
-          Meeting
+          <!-- Meeting -->
+          <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+co_present
+</span>
         </span>
       </div>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import CardListFilters from '@/components/Card/CardListFilters.vue'
@@ -10,7 +10,7 @@ import { useProject } from '@/composables/useProject'
 import { useCard } from '@/composables/useCard'
 import { debounce } from '@/utils/debounce'
 
-import type { CardListItem, CardListProjectFilter } from '@/interfaces/card'
+import type { CardListItem, CardListViewFilters } from '@/interfaces/card'
 
 const PAGE_SIZE = 9
 
@@ -19,10 +19,12 @@ const { projects } = projectStore
 const { getProjects } = useProject()
 const { getCards, loading } = useCard()
 
-const projectFilter = ref<CardListProjectFilter>('all')
-const search = ref('')
-const isPrompt = ref(false)
-const flMeeting = ref(false)
+const filters = ref<CardListViewFilters>({
+  projectFilter: 'all',
+  q: '',
+  isPrompt: false,
+  flMeeting: false,
+})
 const page = ref(1)
 const total = ref(0)
 const items = ref<CardListItem[]>([])
@@ -41,10 +43,10 @@ const loadProjects = async () => {
 
 const loadCards = async () => {
   const { success, data } = await getCards({
-    q: search.value.trim() || undefined,
-    projectId: projectFilter.value === 'all' ? undefined : projectFilter.value,
-    isPrompt: isPrompt.value || undefined,
-    flMeeting: flMeeting.value || undefined,
+    q: filters.value.q.trim() || undefined,
+    projectId: filters.value.projectFilter === 'all' ? undefined : filters.value.projectFilter,
+    isPrompt: filters.value.isPrompt || undefined,
+    flMeeting: filters.value.flMeeting || undefined,
     page: page.value,
     limit: PAGE_SIZE,
   })
@@ -69,7 +71,13 @@ const loadCardsDebounced = debounce(() => {
   void loadCards()
 }, 300)
 
-const resetAndLoad = () => {
+watch(() => filters.value.q, () => {
+  page.value = 1
+  loadCardsDebounced()
+})
+
+const handleFiltersUpdate = (next: CardListViewFilters) => {
+  filters.value = next
   page.value = 1
   void loadCards()
 }
@@ -98,15 +106,8 @@ const goNext = () => {
   void loadCards()
 }
 
-watch([projectFilter, isPrompt, flMeeting], resetAndLoad)
-
-watch(search, () => {
-  page.value = 1
-  loadCardsDebounced()
-})
-
 loadProjects()
- loadCards()
+loadCards()
 </script>
 
 <template>
@@ -118,25 +119,28 @@ loadProjects()
 
       <button
         type="button"
-        class="cursor-pointer rounded-md bg-brand-pink hover:bg-brand-pink text-white text-xs font-semibold px-6 py-1.5 transition-colors"
+        class="cursor-pointer rounded-md bg-brand-orange hover:bg-brand-orange text-white text-xs font-semibold px-6 py-1.5 transition-colors"
         @click="openNew"
       >
-        Nueva
+        <span class="material-symbols-outlined align-middle" 
+        style="font-size: 18px;">
+add_card
+</span>
+        Nueva card
       </button>
     </div>
 
     <CardListFilters
-      v-model:project-filter="projectFilter"
-      v-model:q="search"
-      v-model:is-prompt="isPrompt"
-      v-model:fl-meeting="flMeeting"
+      v-model:q="filters.q"
+      :filters="filters"
       :projects="projects"
+      @update="handleFiltersUpdate"
     />
 
     <div class="mt-8 flex items-center gap-3 md:gap-5">
       <button
         type="button"
-        class="shrink-0 rounded-full border border-black/10 dark:border-white/15 px-3 py-2 text-lg text-gray-500 dark:text-gray-300 disabled:opacity-30"
+        class="shrink-0 rounded-full border border-2 border-black dark:border-white px-3 py-2 text-xl text-black dark:text-gray-200 disabled:opacity-30"
         :disabled="!canPrev"
         aria-label="Anterior"
         @click="goPrev"
@@ -175,7 +179,7 @@ loadProjects()
 
       <button
         type="button"
-        class="shrink-0 rounded-full border border-black/10 dark:border-white/15 px-3 py-2 text-lg text-gray-500 dark:text-gray-300 disabled:opacity-30"
+        class="shrink-0 rounded-full border border-2 border-black dark:border-white px-3 py-2 text-xl text-black dark:text-gray-200 disabled:opacity-30"
         :disabled="!canNext"
         aria-label="Siguiente"
         @click="goNext"

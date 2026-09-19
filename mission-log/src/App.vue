@@ -1,55 +1,25 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, onUnmounted } from 'vue';
-import { RouterView, useRoute,    } from 'vue-router';
+import { RouterView, useRoute, useRouter } from 'vue-router';
 
 import Header from './components/Header.vue';
 import ToastLauncher from './commons/ToastLauncher.vue';
 import SideBarText from './commons/SideBarText.vue';
+import FullScreenLoader from './commons/FullScreenLoader.vue';
 
 const ProjectDrawer = defineAsyncComponent(() => import('./components/Project/ProjectDrawer.vue'));
 
 import { projectStore } from './store/projectStore';
-
-import { useAuth } from './composables/useAuth';
-import { useProjectSelected } from './composables/useProjectSelected';
+import { authStore } from './store/authStore';
 import { useProject } from './composables/useProject';
-import { getAuthToken } from './utils/cookies';
-import FullScreenLoader from './commons/FullScreenLoader.vue';
 
-const { setActiveProject, renderProjectDrawer, drawerOpen, closeDrawer } = projectStore;
+const { renderProjectDrawer, drawerOpen, closeDrawer } = projectStore;
+const { user } = authStore;
 
 const route = useRoute();
-const { fetchMe, loading: isInitializing } = useAuth();
-const { getStoredActiveProject } = useProjectSelected();
+const router = useRouter();
+
 const { showProjectsDrawer } = useProject();
-
-
-const checkAuth = async () => {
-  const token = getAuthToken()
-
-  if (token) {
-    await fetchMe();
-  }
-}
-
-const getActiveProject = async () => {
-  const storedProject = getStoredActiveProject()
-
-  if (!storedProject || !storedProject.id) {
-    showProjectsDrawer(route.path)
-  } else {
-    setActiveProject(storedProject)
-  }
-}
-
-const startApp = async () => {
-  checkAuth()
-  getActiveProject()
-}
-
-startApp()
-
-
 
 const isTypingTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false
@@ -67,17 +37,28 @@ const isTypingTarget = (target: EventTarget | null) => {
 const handleKeydown = (event: KeyboardEvent) => {
   if (isTypingTarget(event.target)) return
 
+  const isShiftC =
+        event.shiftKey &&
+        event.key.toLowerCase() === 'c'
+
   const isShiftP =
         event.shiftKey &&
         event.key.toLowerCase() === 'p'
 
-  if (!isShiftP) return
-  event.preventDefault()
 
-  if (drawerOpen.value) {
+  if (isShiftP) {
+    event.preventDefault()
+    if (drawerOpen.value) {
       closeDrawer()
-  } else {
+    }
+    else {
       showProjectsDrawer(route.path)
+    } 
+  }
+  if (isShiftC) {
+    event.preventDefault()
+    router.push({ name: 'cards' })
+    return
   }
 }
 
@@ -96,9 +77,9 @@ onUnmounted(() => {
     <ToastLauncher/>
 
     <FullScreenLoader
-      v-if="isInitializing" />
+      v-if="route.meta.requiresAuth && !user" />
 
-    <template v-if="!isInitializing && route.meta.requiresAuth">
+    <template v-else-if="route.meta.requiresAuth">
       <Header
         class="max-w-6xl mx-auto"
         :full="true" />

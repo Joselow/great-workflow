@@ -19,7 +19,7 @@ export const useAuthStore = () => {
   const getIsAuthenticated = () => isAuthenticated.value
 
   return {
-    user: user.value,
+    user,
     isAuthenticated: isAuthenticated.value,
     setUser,
     setLogout,
