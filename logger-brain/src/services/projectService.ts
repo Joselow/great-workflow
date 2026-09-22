@@ -2,6 +2,7 @@ import { asc, and, eq } from "drizzle-orm";
 
 import { db } from '../db/index.js';
 import { projects, NewProject } from "../db/schemas/projects.js";
+import { BadRequestError400 } from "../errors/BadRequestError400.js";
 import { NotFoundError404 } from "../errors/NotFoundError404.js";
 
 export async function getProjects(userId: number) {
@@ -12,6 +13,16 @@ export async function getProjects(userId: number) {
 
 export async function getProjectById(id: string) {
     const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project;
+}
+
+export async function assertOwnedProject(projectId: string, userId: number) {
+    const project = await getProjectById(projectId);
+
+    if (!project || project.userId !== userId) {
+        throw new BadRequestError400('Project not found');
+    }
+
     return project;
 }
 export async function createProject(newProject: NewProject) {

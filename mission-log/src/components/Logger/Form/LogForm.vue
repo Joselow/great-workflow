@@ -187,20 +187,28 @@ onUnmounted(() => {
     <button type="button"
       class="
       z-20
-      absolute right-0 -top-7
+      absolute right-6 top-1 px-10
       cursor-pointer
-      text-red-500/90 py-1.5 text-lg font-semibold transition-[filter] 
+      text-blue-500 py-1.5 text-lg font-semibold transition-[filter] 
       hover:brightness-95 active:brightness-90 focus:outline-none focus:ring-2 
-      hover:bg-red-900/3
+      hover:bg-blue-600/20
+      bg-blue-600/10
+      hover:scale-105 transition-all duration-300
+      border-2 border-blue-500/90
+      focus:bg-blue-600/30
       rounded-lg
       px-2
       m-0
       py-0
-      focus:ring-red-600/40"
+      focus:ring-blue-600/40"
       @click="clearLog"
-      v-if="selectedLog?.id"
     >
-      <svg class="" fill="currentColor" width="60px" height="60px" viewBox="0 0 24 24" version="1.2" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M17.414 6.586c-.78-.781-2.048-.781-2.828 0l-2.586 2.586-2.586-2.586c-.78-.781-2.048-.781-2.828 0-.781.781-.781 2.047 0 2.828l2.585 2.586-2.585 2.586c-.781.781-.781 2.047 0 2.828.39.391.902.586 1.414.586s1.024-.195 1.414-.586l2.586-2.586 2.586 2.586c.39.391.902.586 1.414.586s1.024-.195 1.414-.586c.781-.781.781-2.047 0-2.828l-2.585-2.586 2.585-2.586c.781-.781.781-2.047 0-2.828z"></path></g></svg>
+    <span class="material-symbols-outlined align-middle">
+        add  
+    </span>
+    Nuevo
+
+      <!-- <svg class="" fill="currentColor" width="60px" height="60px" viewBox="0 0 24 24" version="1.2" baseProfile="tiny" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M17.414 6.586c-.78-.781-2.048-.781-2.828 0l-2.586 2.586-2.586-2.586c-.78-.781-2.048-.781-2.828 0-.781.781-.781 2.047 0 2.828l2.585 2.586-2.585 2.586c-.781.781-.781 2.047 0 2.828.39.391.902.586 1.414.586s1.024-.195 1.414-.586l2.586-2.586 2.586 2.586c.39.391.902.586 1.414.586s1.024-.195 1.414-.586c.781-.781.781-2.047 0-2.828l-2.585-2.586 2.585-2.586c.781-.781.781-2.047 0-2.828z"></path></g></svg> -->
     </button>
 
     <ConfirmModal

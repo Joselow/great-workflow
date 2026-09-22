@@ -45,8 +45,13 @@ const handleKeydown = (event: KeyboardEvent) => {
         event.shiftKey &&
         event.key.toLowerCase() === 'p'
 
+  const isShiftL =
+        event.shiftKey &&
+        event.key.toLowerCase() === 'l'
+
 
   if (isShiftP) {
+    console.log('isShiftP')
     event.preventDefault()
     if (drawerOpen.value) {
       closeDrawer()
@@ -54,12 +59,21 @@ const handleKeydown = (event: KeyboardEvent) => {
     else {
       showProjectsDrawer(route.path)
     } 
+    return
   }
   if (isShiftC) {
+    console.log('isShiftC')
     event.preventDefault()
     router.push({ name: 'cards' })
     return
   }
+  if (isShiftL) {
+    console.log('isShiftL')
+    event.preventDefault()
+    router.push({ name: 'logger' })
+    return
+  }
+  console.log('no keydown')
 }
 
 

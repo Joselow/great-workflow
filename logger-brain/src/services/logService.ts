@@ -2,6 +2,7 @@ import { asc, and, eq, gte, isNull, lt, or } from "drizzle-orm";
 
 import { db } from '../db/index.js';
 import { logs, NewLog } from "../db/schemas/logs";
+import { assertOwnedProject } from "./projectService.js";
 
 interface LogListFilters {
     projectId?: string
@@ -39,6 +40,8 @@ export async function getLog(userId: number, filters: LogListFilters = {}) {
 }
 
 export async function createLog(newLog: NewLog) {
+  await assertOwnedProject(newLog.projectId, newLog.userId)
+
   const [log] = await db.insert(logs).values(newLog).returning();
   return log
 }

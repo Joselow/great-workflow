@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { ref } from 'vue'
 
 import { fitTextarea } from '@/helpers/fitTextarea'
 
@@ -9,7 +9,7 @@ const sections = defineModel<CardSection[]>({ required: true })
 const rootEl = ref<HTMLElement | null>(null)
 
 const addSection = () => {
-  sections.value = [...sections.value, { title: '', description: '' }]
+  sections.value.push({ title: '', description: '' })
 }
 
 const removeSection = (index: number) => {
@@ -32,12 +32,6 @@ const updateSection = (index: number, field: keyof CardSection, value: string) =
   )
 }
 
-const fitSectionTextareas = async () => {
-  await nextTick()
-  rootEl.value?.querySelectorAll('textarea').forEach(fitTextarea)
-}
-
-watch(() => sections.value.length, fitSectionTextareas, { immediate: true })
 </script>
 
 <template>
@@ -48,19 +42,17 @@ watch(() => sections.value.length, fitSectionTextareas, { immediate: true })
       class="group relative pr-8"
     >
       <input
-        :value="section.title"
+        v-model="section.title"
         type="text"
         placeholder="Título de sección"
         class="w-full bg-transparent text-base font-semibold text-gray-900 dark:text-white border-0 border-b border-black/10 dark:border-white/15 pb-1 focus:outline-none focus:border-brand-orange/60"
-        @input="updateSection(index, 'title', ($event.target as HTMLInputElement).value)"
       />
       <textarea
-        :value="section.description"
+        v-model="section.description"
         rows="1"
         placeholder="Descripción..."
         class="mt-2 w-full min-h-16 resize-y overflow-hidden bg-transparent text-sm text-gray-600 dark:text-gray-300 placeholder:text-gray-400 border-0 focus:outline-none"
         @input="(event) => {
-          updateSection(index, 'description', (event.target as HTMLTextAreaElement).value)
           fitTextarea(event.target)
         }"
       />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ColorPicker from '@/components/Project/ColorPicker.vue'
@@ -30,7 +30,6 @@ const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates('modalCo
 
 const draft = ref<CardDraft | null>(null)
 const notFound = ref(false)
-const descriptionEl = ref<HTMLTextAreaElement | null>(null)
 
 const emptyDraft = (): CardDraft => ({
   name: '',
@@ -151,13 +150,7 @@ const openPublicCard = () => {
   window.open(href, '_blank', 'noopener,noreferrer')
 }
 
-watch(
-  () => draft.value?.description,
-  async () => {
-    await nextTick()
-    fitTextarea(descriptionEl.value)
-  },
-)
+
 
 </script>
 
@@ -180,12 +173,24 @@ watch(
           : 'Se guardará el título, la descripción y las secciones.' }}
       </p>
     </ConfirmModal>
-
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div class="flex items-center gap-2">
+        <h2 class="text-2xl font-bold mb-4">
+          <span class="material-symbols-outlined align-middle"
+            v-if="draft.id"
+          >
+          edit
+          </span>
+          <span class="material-symbols-outlined align-middle"
+          v-else
+          >
+add_circle
+</span>
+        </h2>
         <CardProjectSelect v-model="draft.projectId" :projects="projects" />
         <div class="flex w-auto shrink-0 items-center gap-2">
-      
+          
+        
         <button
           type="button"
           class="cursor-pointer w-auto rounded-lg border px-6 py-1 text-xs font-semibold uppercase tracking-wide transition-colors"

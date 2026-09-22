@@ -114,6 +114,9 @@ loadCards()
   <div class="min-w-0 max-w-5xl mx-auto px-1 py-2 md:py-6">
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <span class="material-symbols-outlined align-middle">
+cards_stack
+</span>
         Cards
       </h1>
 
@@ -123,9 +126,9 @@ loadCards()
         @click="openNew"
       >
         <span class="material-symbols-outlined align-middle" 
-        style="font-size: 18px;">
-add_card
-</span>
+          style="font-size: 18px;">
+          add_card
+        </span>
         Nueva card
       </button>
     </div>

@@ -24,3 +24,7 @@ export interface ActiveProject {
   name: string
   color: string
 }
+
+export interface StoredActiveProject extends ActiveProject {
+  userId: number
+}

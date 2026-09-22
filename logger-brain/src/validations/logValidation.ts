@@ -32,7 +32,7 @@ export const LogQuerySchema = z
             });
         }
 
-        if (hasFrom && hasTo && data.from > data.to) {
+        if (hasFrom && hasTo && (data.from && data.to) && data.from > data.to) {
             ctx.addIssue({
                 code: "custom",
                 message: "from must be less than or equal to to",
