@@ -46,6 +46,15 @@ export const updateCard = async (req: Request, res: Response) => {
     return simpleSuccess(res, 200, card);
 };
 
+export const deleteCard = async (req: Request, res: Response) => {
+    const user = getUserPayload(req);
+    const { id } = req.params;
+
+    await cardService.deleteCard(id, user.id);
+
+    return simpleSuccess(res, 200, { message: 'Card deleted successfully' });
+};
+
 export const listCards = async (req: Request, res: Response) => {
     const user = getUserPayload(req);
     const q = typeof req.query.q === 'string' ? req.query.q : undefined;

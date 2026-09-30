@@ -74,6 +74,20 @@ export function useCard() {
     }
   }
 
+  const deleteCard = async (id: string): Promise<ResponseComposables<null>> => {
+    loading.value = true
+
+    try {
+      await apiApp.delete(`/card/${id}`)
+      successToast('Card eliminada')
+      return { success: true }
+    } catch {
+      return { success: false }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const getPublicCard = async (id: string): Promise<ResponseComposables<PublicCard>> => {
     loading.value = true
 
@@ -93,6 +107,7 @@ export function useCard() {
     getCardById,
     getCards,
     updateCard,
+    deleteCard,
     getPublicCard,
   }
 }

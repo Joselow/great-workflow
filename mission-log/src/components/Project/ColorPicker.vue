@@ -29,6 +29,12 @@ const toHexColor = (value: string) => {
 const hexOpen = ref(false)
 const hexDraft = ref(stripHash(model.value))
 const hexInput = ref<HTMLInputElement | null>(null)
+const nativeColorInput = ref<HTMLInputElement | null>(null)
+
+const nativeColorValue = computed(() => {
+  const next = toHexColor(hexDraft.value)
+  return (next ?? model.value).toLowerCase()
+})
 
 const isCustomColor = computed(() =>
   !PROJECT_COLORS.some(
@@ -53,6 +59,22 @@ const handleHexInput = (event: Event) => {
   if (hexDraft.value.length === 6) {
     applyHexDraft()
   }
+}
+
+const openNativeColor = () => {
+  const input = nativeColorInput.value
+  if (!input) return
+
+  try {
+    input.showPicker()
+  } catch {
+    input.click()
+  }
+}
+
+const handleNativeColor = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  selectColor(target.value)
 }
 
 const togglePicker = async () => {
@@ -154,21 +176,42 @@ const togglePicker = async () => {
         @click="selectColor(option.value)"
       />
 
-      <label class="flex items-center gap-1 rounded-full border border-black/10 dark:border-white/15 bg-gray-50 dark:bg-black/30 px-2.5 py-1">
-        <span class="text-xs text-gray-400 dark:text-white/50 select-none">#</span>
+      <div class="relative flex items-center gap-1.5">
+        <label class="flex items-center gap-1 rounded-full border border-black/10 dark:border-white/15 bg-gray-50 dark:bg-black/30 px-2.5 py-1">
+          <span class="text-xs text-gray-400 dark:text-white/50 select-none">#</span>
+          <input
+            ref="hexInput"
+            :value="hexDraft"
+            type="text"
+            maxlength="6"
+            spellcheck="false"
+            autocomplete="off"
+            class="w-16 bg-transparent text-xs text-gray-800 dark:text-white outline-none font-mono tracking-wide"
+            @input="handleHexInput"
+            @blur="applyHexDraft"
+            @keydown.enter.prevent="applyHexDraft"
+          />
+        </label>
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-black/10 dark:border-white/15 bg-gray-50 dark:bg-black/30 text-gray-500 dark:text-gray-200 hover:scale-105 transition-transform"
+          title="Seleccionar color"
+          @click="openNativeColor"
+        >
+          <span class="material-symbols-outlined align-middle" style="font-size: 16px;">
+            format_color_fill
+          </span>
+        </button>
         <input
-          ref="hexInput"
-          :value="hexDraft"
-          type="text"
-          maxlength="6"
-          spellcheck="false"
-          autocomplete="off"
-          class="w-16 bg-transparent text-xs text-gray-800 dark:text-white outline-none font-mono tracking-wide"
-          @input="handleHexInput"
-          @blur="applyHexDraft"
-          @keydown.enter.prevent="applyHexDraft"
+          ref="nativeColorInput"
+          type="color"
+          tabindex="-1"
+          aria-hidden="true"
+          class="absolute h-px w-px opacity-0"
+          :value="nativeColorValue"
+          @input="handleNativeColor"
         />
-      </label>
+      </div>
     </div>
   </PopoverBase>
 </template>

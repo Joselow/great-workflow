@@ -87,7 +87,10 @@ const openCard = (id: string) => {
 }
 
 const openPublicCard = (id: string) => {
-  void router.push({ name: 'publicCard', params: { id } })
+  window.open(router.resolve({
+      name: 'publicCard',
+      params: { id }
+    }).href, '_blank', 'noopener,noreferrer')
 }
 
 const openNew = () => {
@@ -161,7 +164,7 @@ cards_stack
 
         <p
           v-else-if="!items.length"
-          class="text-sm text-gray-500 dark:text-gray-400"
+          class="text-sm text-gray-500 dark:text-gray-400 text-center"
         >
           No hay cards con estos filtros.
         </p>

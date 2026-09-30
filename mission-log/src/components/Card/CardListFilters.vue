@@ -53,7 +53,6 @@ const onProjectChange = (event: Event) => {
         @change="onProjectChange"
       >
         <option value="all">Todos</option>
-        <option value="null">Global cards</option>
         <option
           v-for="project in projects"
           :key="project.id"

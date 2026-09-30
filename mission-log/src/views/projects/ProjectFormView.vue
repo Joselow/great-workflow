@@ -3,13 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ColorPicker from '@/components/Project/ColorPicker.vue'
-import ConfirmModal from '@/commons/ConfirmModal.vue'
+import DangerZone from '@/commons/DangerZone.vue'
 
 import { projectStore } from '@/store/projectStore'
 import { useProjectSelected } from '@/composables/useProjectSelected'
 import { useProject } from '@/composables/useProject'
 import { errorToast } from '@/composables/useAlerts'
-import { useShowStates } from '@/composables/useShowStates'
 
 import { debounce } from '@/utils/debounce'
 
@@ -28,8 +27,6 @@ const {
   startNewDraft,
   activeProject,
 } = projectStore
-
-const { modalDelete, onModalDelete, offModalDelete } = useShowStates('modalDelete')
 
 const isCurrentSelected = computed(
   () => Boolean(draftProject.value?.id && activeProject.value?.id === draftProject.value.id)
@@ -83,17 +80,13 @@ const handleConfirmSelection = () => {
   })
 }
 
-const handleConfirmDelete = async () => {
-  const id = draftProject.value?.id
-  if (!id) return
-
+const handleConfirmDelete = async (id: string) => {
   const { success } = await deleteProject(id)
   if (!success) return
 
   const wasActive = activeProject.value?.id === id
 
   draftProject.value = null
-  offModalDelete()
   router.push({ name: 'home' })
 
   if (wasActive) {
@@ -193,43 +186,16 @@ onMounted(() => {
       </div>
 
 
-      <template v-if="draftProject.id">
-        <ConfirmModal
-          v-model="modalDelete"
-          title="¿Eliminar este proyecto?"
-          :loading="loading"
-          @confirm="handleConfirmDelete"
-        >
-          <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-            Se eliminará el proyecto y no se puede deshacer.
-          </p>
-        </ConfirmModal>
-        <section
-          class="mt-10 pt-6 border-t border-rose-400 dark:border-white/10
-          
-          flex justify-between items-center flex-wrap
-          "
-        >
-          <div>
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-              Zona de peligro
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Eliminar el proyecto de forma permanente.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="mt-4 cursor-pointer rounded-lg border border-brand-pink/90 bg-brand-pink/10 text-brand-pink hover:bg-brand-pink hover:text-white font-semibold px-6 py-2.5 transition-colors"
-            @click="onModalDelete"
-          >
-            <span class="material-symbols-outlined align-middle text-base">
-              delete
-            </span>
-            Eliminar proyecto
-          </button>
-        </section>
-      </template>
+      <DangerZone
+        v-if="draftProject.id"
+        :id="draftProject.id"
+        description="Eliminar el proyecto de forma permanente."
+        action-label="Eliminar proyecto"
+        confirm-title="¿Eliminar este proyecto?"
+        confirm-description="Se eliminará el proyecto y no se puede deshacer."
+        :loading="loading"
+        @confirm="handleConfirmDelete"
+      />
 
     </div>
   </div>

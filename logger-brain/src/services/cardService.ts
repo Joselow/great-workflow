@@ -137,6 +137,18 @@ export async function updateCard(id: string, userId: number, changes: CardWriteI
     return card;
 }
 
+export async function deleteCard(id: string, userId: number) {
+    const [card] = await db.delete(cards)
+        .where(and(eq(cards.id, id), eq(cards.userId, userId)))
+        .returning();
+
+    if (!card) {
+        throw new NotFoundError404('Card not found');
+    }
+
+    return card;
+}
+
 export async function getPublicCard(id: string) {
     const [card] = await db.select().from(cards).where(eq(cards.id, id));
 

@@ -6,15 +6,22 @@ import NotFoundView from '@/views/NotFoundView.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
 import { useCard } from '@/composables/useCard'
+import { useCopyCardText } from '@/composables/useCopyCardText'
 import { cardSurfaceStyle } from '@/helpers/cardColor'
 
 import type { PublicCard } from '@/interfaces/card'
 
 const route = useRoute()
 const { getPublicCard, loading } = useCard()
+const { copied, copyFromCard } = useCopyCardText()
 
 const card = ref<PublicCard | null>(null)
 const notFound = ref(false)
+
+const handleCopy = () => {
+  if (!card.value) return
+  void copyFromCard(card.value)
+}
 
 onMounted(async () => {
   const id = route.params.id as string
@@ -50,10 +57,24 @@ onMounted(async () => {
 
     <article
       v-else-if="card"
-      class="w-full max-w-3xl rounded-2xl border p-6 md:p-10 min-h-100"
+      class="relative w-full max-w-3xl rounded-2xl border p-6 md:p-10 min-h-100"
       :style="cardSurfaceStyle(card.color)"
     >
-      <div class="flex flex-wrap items-center gap-2 mb-6">
+      <button
+        type="button"
+        class="absolute top-4 right-4 z-10 cursor-pointer rounded-lg border border-black/10 dark:border-white/15
+        bg-white/50 dark:bg-zinc-900/60 px-2 py-1 text-gray-600 dark:text-gray-200
+        hover:bg-white/90 dark:hover:bg-zinc-900/80
+        hover:scale-105 transition-all duration-100"
+        :title="copied ? 'Copiado' : 'Copiar'"
+        @click="handleCopy"
+      >
+        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">
+          {{ copied ? 'check' : 'content_copy' }}
+        </span>
+      </button>
+
+      <div class="flex flex-wrap items-center gap-2 mb-6 pr-12">
         <span
           v-if="card.project"
           class="inline-flex items-center gap-2 rounded-md border px-6 py-1 text-xs font-semibold text-gray-800 dark:text-gray-100"

@@ -30,6 +30,7 @@ const handleClear = () => {
 <template>
   <aside
     class="flex flex-col md:flex-row shrink-0
+    pretty-scroll
       fixed inset-x-0 bottom-0 z-40
       md:relative md:inset-auto md:z-auto md:self-stretch
       rounded-t-lg md:rounded-t-none md:rounded-l-md

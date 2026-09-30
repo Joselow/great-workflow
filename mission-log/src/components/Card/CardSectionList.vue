@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { toRef } from 'vue'
 
-import { fitTextarea } from '@/helpers/fitTextarea'
+import { useTextareaFit } from '@/composables/useTextareaFit'
 
 import type { CardSection } from '@/interfaces/card'
 
+const props = defineProps<{
+  expanded: boolean
+}>()
+
 const sections = defineModel<CardSection[]>({ required: true })
-const rootEl = ref<HTMLElement | null>(null)
+const { onFocus, onBlur, onInput } = useTextareaFit(toRef(props, 'expanded'))
+// const rootEl = ref<HTMLElement | null>(null)
 
 const addSection = () => {
   sections.value.push({ title: '', description: '' })
@@ -26,11 +31,11 @@ const moveSection = (index: number, direction: -1 | 1) => {
   sections.value = copy
 }
 
-const updateSection = (index: number, field: keyof CardSection, value: string) => {
-  sections.value = sections.value.map((section, i) =>
-    i === index ? { ...section, [field]: value } : section
-  )
-}
+// const updateSection = (index: number, field: keyof CardSection, value: string) => {
+//   sections.value = sections.value.map((section, i) =>
+//     i === index ? { ...section, [field]: value } : section
+//   )
+// }
 
 </script>
 
@@ -52,9 +57,9 @@ const updateSection = (index: number, field: keyof CardSection, value: string) =
         rows="1"
         placeholder="Descripción..."
         class="mt-2 w-full min-h-16 resize-y overflow-hidden bg-transparent text-sm text-gray-600 dark:text-gray-300 placeholder:text-gray-400 border-0 focus:outline-none"
-        @input="(event) => {
-          fitTextarea(event.target)
-        }"
+        @focus="onFocus"
+        @blur="onBlur"
+        @input="onInput"
       />
 
       <div class="absolute top-0 right-0 flex flex-col items-center gap-0.5">
