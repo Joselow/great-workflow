@@ -5,6 +5,7 @@ import { timestamps } from './commons.js';
 import { genUUIDv7 } from '../../utils/uuidv7.js';
 import { users } from './users.js';
 import { projects } from './projects.js';
+import { cardMeetings } from './cardMeetings.js';
 
 export interface CardSection {
   title: string;
@@ -15,7 +16,6 @@ export const cards = pgTable('cards', {
   id: uuid('id').primaryKey().$defaultFn(() => genUUIDv7()),
   userId: integer('user_id').notNull(),
   projectId: uuid('project_id'),
-  meetingId: uuid('meeting_id'),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull().default(''),
   color: varchar('color', { length: 7 }).notNull().default('#f5f5f4'),
@@ -27,9 +27,10 @@ export const cards = pgTable('cards', {
   index('cards_user_id_updated_at_idx').on(table.userId, table.updatedAt),
 ]);
 
-export const cardsRelations = relations(cards, ({ one }) => ({
+export const cardsRelations = relations(cards, ({ one, many }) => ({
   user: one(users, { fields: [cards.userId], references: [users.id] }),
   project: one(projects, { fields: [cards.projectId], references: [projects.id] }),
+  cardMeetings: many(cardMeetings),
 }));
 
 export type Card = typeof cards.$inferSelect;

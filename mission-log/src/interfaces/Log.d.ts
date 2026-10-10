@@ -2,8 +2,6 @@ export interface Log {
     id: string
     userId: number
     projectId: string
-    meetingId?: string | null
-    typeMeetingLink?: number | null
 
     description: string
     responsible: string

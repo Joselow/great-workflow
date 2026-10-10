@@ -43,6 +43,20 @@
       "when": 1789277714147,
       "tag": "0005_little_sheva_callister",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791602745733,
+      "tag": "0006_meeting_planning",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791603950584,
+      "tag": "0007_meeting_issues",
+      "breakpoints": true
     }
   ]
 }

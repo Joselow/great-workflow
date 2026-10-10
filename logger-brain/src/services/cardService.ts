@@ -85,7 +85,6 @@ export async function createCard(userId: number, input: CardWriteInput) {
     const [card] = await db.insert(cards).values({
         userId,
         projectId: input.projectId ?? null,
-        meetingId: null,
         name: input.name ?? '',
         description: input.description ?? '',
         color: input.color ?? '#f5f5f4',

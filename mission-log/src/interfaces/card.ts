@@ -12,7 +12,6 @@ export interface Card {
   id: string
   userId: number
   projectId: string | null
-  meetingId: string | null
   name: string
   description: string
   color: string

@@ -50,8 +50,6 @@ export const verifyLogQuerySchema = (payload: unknown) => {
 // Create
 export const CreateLogSchema = z.object({
     projectId: z.uuidv7(),
-    meetingId: z.uuidv7().nullish(),
-    typeMeetingLink : z.enum(["meet-log", "log-meet"]).nullish(),
 
     description : z.string().min(2),
     responsible: z.string().min(3).max(100),

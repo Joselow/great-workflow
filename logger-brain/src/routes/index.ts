@@ -8,13 +8,12 @@ import { requireAuth } from "../middlewares/security/auth";
 
 export const router = Router();
 
-
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);
 router.use("/public/card", publicCardRouter);
 router.use('/app', requireAuth, protectedRouter)
 
-router.use('/', (req, res) => {
+router.get('/', (req, res) => {
     res.json({
         success: true,
         message: 'Logger Brain api',

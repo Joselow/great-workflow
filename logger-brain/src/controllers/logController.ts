@@ -21,15 +21,13 @@ export const getLog = async (req: Request, res: Response) => {
 }
 
 export const createLog = async (req: Request, res: Response) => {
-    const { projectId, meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
+    const { projectId, description, responsible, tags, comment, completed } = req.body;
 
     const user = getUserPayload(req)
 
     const newLog = await logService.createLog({
       userId: user.id,
       projectId,
-      meetingId, 
-      typeMeetingLink, 
       description, 
       responsible, 
       tags, 
@@ -43,12 +41,10 @@ export const createLog = async (req: Request, res: Response) => {
 export const updateLog = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-    const { projectId, meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
+    const { projectId, description, responsible, tags, comment, completed } = req.body;
 
     const log = await logService.updateLog(id, {
       projectId,
-      meetingId,
-    typeMeetingLink,
     description,
     responsible,
     tags,

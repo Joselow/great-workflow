@@ -7,18 +7,13 @@ import { BadRequestError400 } from "../../errors/BadRequestError400.js";
 
 export const storeLogRequestForm = (req: Request, res: Response, next: NextFunction): void => {
     const { id } = req.params
-    const { projectId, meetingId, typeMeetingLink, description, responsible, tags, comment, completed } = req.body;
+    const payload = req.body;
 
-    const payload = {
-        projectId,
-        meetingId,
-        typeMeetingLink,
-        description,
-        responsible,
-        tags,
-        comment,
-        completed,
-    };
+    if ('meetingId' in payload || 'typeMeetingLink' in payload) {
+        throw new BadRequestError400('The given data was invalid', {
+            meetingId: ['Use log_meetings links instead of meetingId'],
+        })
+    }
 
     const validated = id
         ? verifyUpdateLogSchema(payload)

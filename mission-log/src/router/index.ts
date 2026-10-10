@@ -29,6 +29,24 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/meetings',
+    name: 'meetings',
+    component: () => import('@/views/meetings/MeetingsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/meetings/new',
+    name: 'newMeeting',
+    component: () => import('@/views/meetings/MeetingFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/meetings/:id',
+    name: 'editMeeting',
+    component: () => import('@/views/meetings/MeetingFormView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/cards',
     name: 'cards',
     component: () => import('@/views/cards/CardsView.vue'),

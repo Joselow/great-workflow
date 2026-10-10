@@ -49,6 +49,10 @@ const handleKeydown = (event: KeyboardEvent) => {
         event.shiftKey &&
         event.key.toLowerCase() === 'l'
 
+  const isShiftM =
+        event.shiftKey &&
+        event.key.toLowerCase() === 'm'
+
 
   if (isShiftP) {
     console.log('isShiftP')
@@ -71,6 +75,11 @@ const handleKeydown = (event: KeyboardEvent) => {
     console.log('isShiftL')
     event.preventDefault()
     router.push({ name: 'logger' })
+    return
+  }
+  if (isShiftM) {
+    event.preventDefault()
+    router.push({ name: 'meetings' })
     return
   }
   console.log('no keydown')
