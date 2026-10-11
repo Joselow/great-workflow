@@ -91,7 +91,26 @@ onBeforeUnmount(closeMenu)
         role="menuitem"
         @click="askDelete"
       >
+      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
         Eliminar
+      </button>
+      <button
+        type="button"
+        class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
+        role="menuitem"
+        @click="askDelete"
+      >
+      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
+        Marcar como ejecutada
+      </button>
+      <button
+        type="button"
+        class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
+        role="menuitem"
+        @click="askDelete"
+      >
+      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
+        Objetivo alcanzado
       </button>
     </div>
 

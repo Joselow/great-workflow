@@ -379,6 +379,7 @@ export async function listMeetings(userId: number, filters: MeetingListFilters =
         projectId: meetings.projectId,
         projectName: projects.name,
         projectColor: projects.color,
+        executed: meetings.executed,
     })
         .from(meetings)
         .leftJoin(projects, eq(meetings.projectId, projects.id))
@@ -398,6 +399,7 @@ export async function listMeetings(userId: number, filters: MeetingListFilters =
         project: row.projectId && row.projectName && row.projectColor
             ? { name: row.projectName, color: row.projectColor }
             : null,
+        executed: row.executed,
     }));
 
     return {

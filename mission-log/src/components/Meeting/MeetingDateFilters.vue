@@ -47,7 +47,7 @@ const rangeNote = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-black/10 px-4 py-3 text-sm dark:border-white/15">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl px-4 py-3 text-sm dark:border-white/15">
     <label class="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
       Desde
       <input
@@ -70,9 +70,15 @@ const rangeNote = computed(() => {
     </label>
     <button
       type="button"
-      class="cursor-pointer rounded-lg border border-black/10 px-3 py-1 text-xs font-semibold text-gray-700 transition-colors hover:bg-black/5 dark:border-white/15 dark:text-gray-200 dark:hover:bg-white/10"
+      class="cursor-pointer rounded-lg border border-black/10 px-3 py-1 text-xs font-semibold text-gray-700 transition-colors 
+      bg-red-500/80 
+      dark:bg-red-500/10
+      text-white
+      hover:bg-red-500 
+      dark:hover:bg-red-500/30"
       @click="clear"
     >
+    <span class="material-symbols-outlined align-middle">ink_eraser</span>
       Limpiar
     </button>
     <p

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, } from 'vue'
+import { useRouter } from 'vue-router'
 
 import ModalBase from '@/commons/ModalBase.vue'
 import CardForm from '@/components/Card/CardForm.vue'
+import EmptyRecords from '@/commons/EmptyRecords.vue'
 
 import { projectStore } from '@/store/projectStore'
 import { useCard } from '@/composables/useCard'
@@ -18,6 +20,9 @@ const open = defineModel<boolean>({ required: true })
 const emit = defineEmits<{
   pick: [card: CardListItem]
 }>()
+
+const router = useRouter()
+
 
 const { activeProject, projects } = projectStore
 const { getCards, createCard, loading } = useCard()
@@ -105,37 +110,59 @@ const handleCreate = async () => {
   })
   open.value = false
 }
+
+const showCard = (card: CardListItem) => {
+  window.open(router.resolve({
+      name: 'publicCard',
+      params: { id: card.id }
+    }).href, '_blank', 'noopener,noreferrer')
+}
 </script>
 
 <template>
   <ModalBase v-model="open" max-width="lg">
     <div class="p-4 md:p-5">
       <div class="mb-4 flex items-center justify-between gap-2">
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          Asociar card
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <span class="material-symbols-outlined align-middle ">cards_stack</span>
+          Asociar Card
         </h3>
         <div class="flex gap-1">
-          <button
+          <button class="cursor-pointer inline-flex h-8 w-9 items-center justify-center rounded-md border 
+            border-red-500/40 bg-red-500/10 
+            text-red-700 dark:text-red-300"
+            title="Cerrar"
+            @click="open = false"
+            >
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">close</span>
+          </button>
+        
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end py-4">
+        <button
             type="button"
-            class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
+            class="px-6 cursor-pointer rounded-md border py-1 text-xs font-semibold"
             :class="mode === 'pick'
               ? 'border-gray-900 bg-gray-900 text-white dark:border-white/40 dark:bg-white/20'
-              : 'border-black/10 dark:border-white/15'"
+              : 'border-black/10 bg-black/5 text-black dark:border-white/15 dark:text-white'"
             @click="openPicker"
           >
+          <span class="material-symbols-outlined align-middle">credit_card_heart</span>
             Existente
           </button>
           <button
             type="button"
-            class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
+            class="px-6 cursor-pointer rounded-md border py-1 text-xs font-semibold"
             :class="mode === 'create'
               ? 'border-gray-900 bg-gray-900 text-white dark:border-white/40 dark:bg-white/20'
-              : 'border-black/10 dark:border-white/15'"
+              : 'border-black/60 bg-black/5 text-black dark:border-white/15 dark:text-white'"
             @click="mode = 'create'"
           >
+          <span class="material-symbols-outlined align-middle">add_card</span>
             Nueva
           </button>
-        </div>
       </div>
 
       <div v-if="mode === 'pick'" class="space-y-3">
@@ -143,38 +170,76 @@ const handleCreate = async () => {
           v-model="q"
           type="search"
           placeholder="Buscar cards..."
-          class="w-full rounded-md border border-black/10 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-1.5 text-sm outline-none"
+          class="w-full rounded-md border border-black/50 dark:border-white/15 
+          bg-white dark:bg-white/5 px-3 py-1.5 text-sm outline-none
+          text-gray-500 dark:text-gray-200
+          "
           @input="onSearch"
         />
         <p v-if="loading && !items.length" class="text-sm text-gray-400">Cargando...</p>
-        <p v-else-if="!items.length" class="text-sm text-gray-500">No hay cards.</p>
-        <ul v-else class="max-h-72 space-y-1 overflow-y-auto">
+        <div v-else-if="!items.length">
+          <EmptyRecords>
+            <p class="text-md text-gray-900 dark:text-gray-200">
+              <span class="material-symbols-outlined align-middle">cards_stack</span>
+              No hay cards.</p>
+          </EmptyRecords>
+        </div>
+        <ul v-else class="max-h-72 space-y-1 overflow-y-auto
+         grid grid-cols-1 gap-2
+         md:grid-cols-2
+         lg:grid-cols-3
+        ">
           <li
             v-for="card in items"
             :key="card.id"
           >
             <button
               type="button"
-              class="flex w-full cursor-pointer items-center gap-2 rounded-md border border-black/10 dark:border-white/10 px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5"
+              class="flex w-full cursor-pointer items-center justify-between gap-2 
+              rounded-lg border border-2 dark:border-white/10 px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5"
+              :style="{ borderColor: (card.color) }"
+              @dblclick="showCard(card)"
               @click="pick(card)"
-            >
-              <span
-                class="h-3 w-3 shrink-0 rounded-sm"
-                :style="{ backgroundColor: card.color }"
-              />
-              <span class="truncate text-sm text-gray-800 dark:text-gray-100">{{ card.name }}</span>
+
+            > 
+              <div class="flex min-w-0 flex-1 items-center">
+                <span
+                  class="mr-2 h-3 w-3 shrink-0 rounded-full inline-block"
+                  :style="{ backgroundColor: card.color }"
+                />
+                <span class="truncate text-sm text-gray-800 dark:text-gray-100">{{ card.name }}</span>
+              </div>
+              <div class="flex items-center justify-end gap-2">
+                <span 
+                  title="Ver card (dblclick card)"
+                  class="material-symbols-outlined align-middle hover:text-indigo-500"
+                  @click="showCard(card)"
+                  >multimodal_hand_eye</span>
+
+                <span 
+                  title="Agregar card (click card)"
+                  class="material-symbols-outlined align-middle
+                    hover:text-blue-500
+                  "
+                  @click="pick(card)"
+                  >add</span>
+              </div>
             </button>
           </li>
         </ul>
       </div>
 
-      <CardForm
+      <div
+      class="px-6"
         v-else
-        v-model="cardDraft"
-        :projects="projects"
-        save-label="Crear card"
-        @save="handleCreate"
-      />
+      >
+        <CardForm
+          v-model="cardDraft"
+          :projects="projects"
+          save-label="Crear card"
+          @save="handleCreate"
+        />
+      </div>
     </div>
   </ModalBase>
 </template>

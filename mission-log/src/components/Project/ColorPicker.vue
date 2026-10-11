@@ -9,8 +9,10 @@ const model = defineModel<string>({ required: true })
 
 withDefaults(defineProps<{
   variant?: 'panel' | 'button'
+  size?: 'small' | 'medium'
 }>(), {
   variant: 'panel',
+  size: 'medium',
 })
 
 const stripHash = (value: string) => value.replace(/^#/, '').slice(0, 6)
@@ -152,10 +154,16 @@ const togglePicker = async () => {
     <template #trigger>
       <button
         type="button"
-        class="h-11 w-12 shrink-0 cursor-pointer rounded-lg border hover:scale-105 transition-transform"
-        :class="isLightHex(model)
-          ? 'border-zinc-400/70 shadow-sm dark:border-white/35'
-          : 'border-black/10 dark:border-white/10 shadow-sm'"
+        class="shrink-0 cursor-pointer rounded-lg border hover:scale-105 transition-transform"
+        :class="
+        [
+          isLightHex(model)
+            ? 'border-zinc-400/70 shadow-sm dark:border-white/35'
+            : 'border-black/10 dark:border-white/10 shadow-sm',
+          size === 'small' ? 'h-9 w-9' : 'h-11 w-12',
+        ]
+          
+          "
         :style="{ backgroundColor: model }"
         title="Color de la card"
         @click="togglePicker"

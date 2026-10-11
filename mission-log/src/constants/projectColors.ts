@@ -5,6 +5,7 @@ export interface ProjectColorOption {
 }
 
 export const DEFAULT_PROJECT_COLOR = '#f5f5f4'
+export const COLOR_ISSUE = '#FF5D8F'
 
 export const PROJECT_COLORS: ProjectColorOption[] = [
   { id: 'neutral', value: '#f5f5f4', label: 'Neutral' },

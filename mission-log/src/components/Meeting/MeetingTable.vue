@@ -34,10 +34,10 @@ const formatDate = (value: string) => {
         <tr class="border-b border-black/10 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:border-white/10 dark:text-gray-400">
           <th class="px-3 py-2 font-semibold">Título</th>
           <th class="px-3 py-2 font-semibold">Fecha</th>
-          <th class="px-3 py-2 font-semibold">Duración</th>
+          <th class="px-3 py-2 font-semibold">Duración Estimada</th>
           <th class="px-3 py-2 font-semibold">Proyecto</th>
           <th class="px-3 py-2 font-semibold">Participantes</th>
-          <th class="w-12 px-3 py-2">
+          <th class="w-20 px-3 py-2">
             <span class="sr-only">Acciones</span>
           </th>
         </tr>
@@ -56,12 +56,17 @@ const formatDate = (value: string) => {
           :key="meeting.id"
           tabindex="0"
           class="cursor-pointer border-b border-black/5 last:border-b-0 hover:bg-black/[0.03] focus:outline-none focus:bg-black/[0.04] dark:border-white/5 dark:hover:bg-white/[0.04] dark:focus:bg-white/[0.06]"
-          @click="emit('open', meeting)"
           @keydown.enter="emit('open', meeting)"
           @keydown.space.prevent="emit('open', meeting)"
         >
           <td class="px-3 py-2.5">
             <span class="inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+              <span v-if="!meeting.executed" class="material-symbols-outlined align-middle text-green-600">
+                verified
+              </span>
+              <span v-if="!meeting.executed" class="material-symbols-outlined align-middle text-green-600">
+                rocket_launch
+              </span>
               <span
                 class="inline-block size-2.5 shrink-0 rounded-full border border-black/10"
                 :style="{ backgroundColor: meeting.color }"
@@ -83,11 +88,24 @@ const formatDate = (value: string) => {
             <span class="line-clamp-2 break-words">{{ meeting.participants }}</span>
           </td>
           <td
-            class="px-3 py-2.5 text-right"
+            class="px-3 py-2.5 "
             @click.stop
             @keydown.stop
           >
-            <MeetingRowActions @delete="emit('delete', meeting)" />
+          <div class="flex gap-2 align-center">
+            <button class="px-4 cursor-pointer inline-flex h-7 w-7 items-center justify-center rounded-md border border-sky-500/40 bg-sky-500/50 
+            text-sky-700 dark:text-sky-300"
+            title="Ver reunión"
+            @click="emit('open', meeting)"
+            >
+              <span class="material-symbols-outlined" style="font-size: 1.1rem;">
+                visibility
+              </span>
+            </button>
+            <MeetingRowActions
+              class="text-right"
+            @delete="emit('delete', meeting)" />
+          </div>
           </td>
         </tr>
       </tbody>

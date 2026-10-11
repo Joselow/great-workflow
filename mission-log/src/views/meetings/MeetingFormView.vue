@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import ColorPicker from '@/components/Project/ColorPicker.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import DangerZone from '@/commons/DangerZone.vue'
 import CardProjectSelect from '@/components/Card/CardProjectSelect.vue'
@@ -16,10 +15,11 @@ import { useMeeting } from '@/composables/useMeeting'
 import { useShowStates } from '@/composables/useShowStates'
 import { errorToast } from '@/composables/useAlerts'
 
-import { DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
+import { COLOR_ISSUE, DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
 import { cardSurfaceStyle, isLightHex } from '@/helpers/cardColor'
 
 import type { MeetingDraft, MeetingWritePayload } from '@/interfaces/meeting'
+import { formatHours } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,31 +41,23 @@ const toDatetimeLocal = (value?: string) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-const queryLogLinks = () => {
-  const raw = route.query.logs
-  const value = Array.isArray(raw) ? raw.join(',') : raw
-  if (!value) return []
-
-  return value
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean)
-    .map((logId) => ({ logId, source: 'log' as const }))
-}
-
 const emptyDraft = (): MeetingDraft => ({
   title: '',
   date: toDatetimeLocal(),
-  estimatedDuration: 40,
+  estimatedDuration: 30,
   topicStatus: '',
   objective: '',
   participants: '',
   color: DEFAULT_PROJECT_COLOR,
   projectId: activeProject.value?.id ?? null,
-  issues: [{ name: '', color: DEFAULT_PROJECT_COLOR }],
+  issues: [{ name: '', color: COLOR_ISSUE }],
   cardIds: [],
-  logLinks: queryLogLinks(),
+  logLinks: [],
   cards: [],
+  lessons: null,
+  summary: null,
+  executed: false,
+  objectiveAchieved: null,
 })
 
 const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
@@ -80,6 +72,10 @@ const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
   issues: current.issues.filter((item) => item.name.trim()),
   cardIds: current.cards.map((card) => card.id),
   logLinks: current.logLinks,
+  lessons: current.lessons,
+  summary: current.summary,
+  executed: current.executed,
+  objectiveAchieved: current.objectiveAchieved,
 })
 
 const loadProjects = async () => {
@@ -119,6 +115,10 @@ const startView = async () => {
     cardIds: data.cards.map((card) => card.id),
     logLinks: data.logs.map((log) => ({ logId: log.id, source: log.source })),
     cards: data.cards,
+    lessons: data.lessons,
+    summary: data.summary,
+    executed: data.executed,
+    objectiveAchieved: data.objectiveAchieved,
   }
 }
 
@@ -181,6 +181,7 @@ const handleConfirmDelete = async (id: string) => {
 
   await router.push({ name: 'meetings' })
 }
+
 </script>
 
 <template>
@@ -199,7 +200,7 @@ const handleConfirmDelete = async (id: string) => {
 
   <div
     v-else-if="draft"
-    class="min-w-0 max-w-3xl mx-auto px-1 pb-2 md:pb-6"
+    class="min-w-0 max-w-4xl mx-auto px-1 pb-2 md:pb-6"
   >
     <ConfirmModal
       v-model="modalConfirm"
@@ -212,21 +213,31 @@ const handleConfirmDelete = async (id: string) => {
       </p>
     </ConfirmModal>
 
-    <div class="mt-4 mb-3 flex items-center gap-2">
-      <h2 class="text-2xl font-bold">
-        <span class="material-symbols-outlined align-middle">
-          {{ draft.id ? 'edit' : 'add_circle' }}
+    <div class="mt-4 mb-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h2 class="text-2xl font-bold">
+          <span class="material-symbols-outlined align-middle">
+            {{ draft.id ? 'edit' : 'add_circle' }}
+          </span>
+        </h2>
+        <CardProjectSelect v-model="draft.projectId" :projects="projects" />
+      </div>
+      <div>
+        <span v-if="!draft.executed" class="font-bold italic text-2xl text-green-600 dark:text-green-400">
+          <span class="material-symbols-outlined align-middle">
+            check
+          </span>
+          Ejecutada
         </span>
-      </h2>
-      <CardProjectSelect v-model="draft.projectId" :projects="projects" />
+      </div>
     </div>
 
     <div
       class="relative rounded-2xl border p-6 md:p-8"
       :style="cardSurfaceStyle(draft.color)"
     >
-      <div class="grid gap-6 md:grid-cols-[1fr_14rem]">
-        <div class="min-w-0 space-y-4">
+      <div class="grid gap-6 md:grid-cols-[1fr_18rem]">
+        <div class="min-w-0 space-y-6">
           <input
             v-model="draft.title"
             type="text"
@@ -235,16 +246,32 @@ const handleConfirmDelete = async (id: string) => {
             class="w-full bg-transparent text-3xl font-semibold text-gray-900 dark:text-white border-0 focus:outline-none placeholder:text-gray-400"
           />
 
-          <label class="block text-xs font-semibold text-gray-500">
-            Fecha
-            <input
-              v-model="draft.date"
-              type="datetime-local"
-              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1 text-sm text-gray-800 dark:text-gray-100 outline-none"
-            />
+          <label class="block text-xs font-semibold 
+          ">
+            Fecha y Hora
+            
+            <div class="relative mt-2 flex items-center justify-between rounded-md border border-2 
+              border-black/60 p-2 py-1 dark:border-white/35">
+              <span class="text-md font-bold">
+                {{ formatHours(draft.date) }}
+              </span>
+
+              <span class="material-symbols-outlined align-middle">
+                date_range
+              </span>
+
+              <input
+                v-model="draft.date"
+                type="datetime-local"
+                aria-label="Fecha y hora"
+                class="absolute inset-0 cursor-pointer opacity-0 px-3
+                "
+              />
+            </div>
           </label>
 
-          <label class="block text-xs font-semibold text-gray-500">
+          <label class=" block text-xs font-semibold text-blue-600
+          dark:text-blue-400">
             Estado actual
             <textarea
               v-model="draft.topicStatus"
@@ -253,7 +280,7 @@ const handleConfirmDelete = async (id: string) => {
             />
           </label>
 
-          <label class="text-red-600 dark:text-red-400 block text-xs font-semibold 
+          <label class="text-green-600 dark:text-green-400 block text-xs font-semibold 
           ">
             Objectivo de la reunión
             <textarea
@@ -266,17 +293,24 @@ const handleConfirmDelete = async (id: string) => {
 
           <MeetingIssueList v-model="draft.issues" />
 
-          <label class="block text-xs font-semibold text-gray-500">
+          <label class="block text-xs font-semibold 
+          text-sky-600 dark:text-sky-400"
+          >
             Tiempo estimado (min)
             <input
               v-model.number="draft.estimatedDuration"
               type="number"
               min="1"
-              class="mt-1 w-28 rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1 text-sm outline-none"
+              class="
+              ms-2
+              mt-1 w-20 rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1 
+              text-lg outline-none"
             />
           </label>
 
-          <label class="block text-xs font-semibold text-gray-500">
+          <label class="block text-xs font-semibold text-orange-500
+          dark:text-orange-300
+          ">
             Participantes
             <textarea
               v-model="draft.participants"
@@ -287,10 +321,67 @@ const handleConfirmDelete = async (id: string) => {
         </div>
 
         <div class="space-y-4">
-          <div class="flex justify-end">
+          <!-- <div class="flex justify-end">
             <ColorPicker v-model="draft.color" variant="button" />
-          </div>
+          </div> -->
           <MeetingCardPanel v-model="draft.cards" />
+
+          <div 
+            class="mt-2 border border-2 border-gray-200 dark:border-gray-800 rounded-md p-2"
+          >
+          <label class="block text-md font-semibold 
+          ">
+            Lecciones aprendidas
+          </label>
+
+            <textarea
+              v-model="draft.lessons"
+              rows="2"
+              maxlength="255"
+              placeholder="Lecciones aprendidas..."
+              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm outline-none"
+            />
+          </div>
+          <div 
+            class="mt-2 border border-2 border-gray-200 dark:border-gray-800 rounded-md p-2"
+          >
+          <label class="block text-md font-semibold 
+          ">
+            Resumen de la reunión
+          </label>
+            <textarea
+              v-model="draft.summary"
+              rows="2"
+              maxlength="255"
+              placeholder="Resumen de la reunión..."
+              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm outline-none"
+            />
+          </div>
+          <div 
+            class="mt-2 border border-2 border-gray-200 dark:border-gray-800 rounded-md p-2"
+          >
+           <button
+            type="button"
+            class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
+           >
+            <span class="material-symbols-outlined align-middle">add</span>
+            Copiar Resumen 
+           </button>
+           <button
+            type="button"
+            class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
+           >
+            <span class="material-symbols-outlined align-middle">add</span>
+            Generar resumen para correo
+           </button>
+           <button
+            type="button"
+            class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
+           >
+            <span class="material-symbols-outlined align-middle">add</span>
+            Generar resumen para whatsapp
+           </button>
+          </div>
         </div>
       </div>
 

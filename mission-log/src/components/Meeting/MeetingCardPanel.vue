@@ -20,12 +20,15 @@ const removeCard = (id: string) => {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-black/10 dark:border-white/15 p-4">
+  <div class="rounded-lg border border-gray-500 border-2 dark:border-white/15 p-4">
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Cards</h3>
+      <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+        <span class="material-symbols-outlined align-middle"> cards_stack </span>
+        Cards asociadas</h3>
       <button
         type="button"
-        class="cursor-pointer inline-flex h-7 w-7 items-center justify-center rounded-md border border-emerald-500/40 bg-emerald-500/15 text-emerald-700"
+        class="cursor-pointer inline-flex h-7 w-7 items-center justify-center rounded-md border border-sky-500/40 bg-sky-500/50 
+        text-sky-700 dark:text-sky-300"
         title="Agregar card"
         @click="modalOpen = true"
       >
@@ -44,10 +47,12 @@ const removeCard = (id: string) => {
       <li
         v-for="card in cards"
         :key="card.id"
-        class="flex items-start justify-between gap-2 rounded-xl border px-3 py-2"
+        class="flex items-start justify-between gap-2 rounded-lg border px-3 py-1"
         :style="cardTileStyle(card.color)"
       >
         <p class="min-w-0 truncate text-sm font-medium text-gray-900 dark:text-white">
+          <span class="material-symbols-outlined align-middle " 
+          style="font-size: 1.2rem;">credit_score</span>
           {{ card.name || 'Sin título' }}
         </p>
         <button

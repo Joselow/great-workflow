@@ -53,6 +53,10 @@ export interface MeetingWritePayload {
   issues: MeetingIssue[]
   cardIds: string[]
   logLinks: MeetingWriteLogLink[]
+  lessons: string | null
+  summary: string | null
+  executed: boolean
+  objectiveAchieved: boolean | null
 }
 
 export interface MeetingDraft extends MeetingWritePayload {
@@ -69,6 +73,7 @@ export interface MeetingListItem {
   color: string
   projectId: string | null
   project: CardProjectSummary | null
+  executed: boolean
 }
 
 export interface MeetingDateFilters {
