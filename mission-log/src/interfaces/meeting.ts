@@ -74,6 +74,13 @@ export interface MeetingListItem {
   projectId: string | null
   project: CardProjectSummary | null
   executed: boolean
+  objectiveAchieved: boolean | null
+}
+
+export interface MeetingQualificationPayload {
+  objectiveAchieved: boolean
+  summary: string | null
+  lessons: string | null
 }
 
 export interface MeetingDateFilters {

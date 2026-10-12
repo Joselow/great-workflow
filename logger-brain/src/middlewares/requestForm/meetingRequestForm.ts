@@ -22,6 +22,10 @@ export const storeMeetingRequestForm = (req: Request, _res: Response, next: Next
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     } = req.body;
 
     const payload = {
@@ -36,6 +40,10 @@ export const storeMeetingRequestForm = (req: Request, _res: Response, next: Next
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     };
 
     const validated = id

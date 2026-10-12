@@ -7,8 +7,10 @@ import type {
   Meeting,
   MeetingListFilters,
   MeetingListResponse,
+  MeetingQualificationPayload,
   MeetingWritePayload,
 } from '@/interfaces/meeting'
+
 import type { ResponseComposables } from '@/interfaces/request'
 
 export function useMeeting() {
@@ -81,6 +83,27 @@ export function useMeeting() {
     }
   }
 
+  const qualifyMeeting = async (
+    id: string,
+    payload: MeetingQualificationPayload,
+  ): Promise<ResponseComposables<Meeting>> => {
+    loading.value = true
+
+    try {
+      const { data } = await apiApp.put(`/meeting/${id}`, {
+        objectiveAchieved: payload.objectiveAchieved,
+        summary: payload.summary,
+        lessons: payload.lessons,
+      })
+      successToast('Reunión calificada')
+      return { success: true, data }
+    } catch {
+      return { success: false }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const deleteMeeting = async (id: string): Promise<ResponseComposables<null>> => {
     loading.value = true
 
@@ -101,6 +124,7 @@ export function useMeeting() {
     getMeetingById,
     getMeetings,
     updateMeeting,
+    qualifyMeeting,
     deleteMeeting,
   }
 }

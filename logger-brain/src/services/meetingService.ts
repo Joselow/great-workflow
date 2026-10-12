@@ -29,6 +29,10 @@ export interface MeetingWriteInput {
     issues?: { id?: number; name: string; color?: string }[];
     cardIds?: string[];
     logLinks?: MeetingLogLinkInput[];
+    summary?: string | null;
+    lessons?: string | null;
+    executed?: boolean;
+    objectiveAchieved?: boolean | null;
 }
 
 export interface MeetingListFilters {
@@ -46,6 +50,26 @@ async function assertOwnedProject(projectId: string | null | undefined, userId: 
     if (!project || project.userId !== userId) {
         throw new BadRequestError400("Project not found");
     }
+}
+
+function blankToNull(value: string | null): string | null {
+    if (value === null) return null;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+}
+
+function qualificationColumns(input: MeetingWriteInput): Partial<NewMeeting> {
+    const columns: Partial<NewMeeting> = {};
+
+    if (input.summary !== undefined) columns.summary = blankToNull(input.summary);
+    if (input.lessons !== undefined) columns.lessons = blankToNull(input.lessons);
+    if (input.executed !== undefined) columns.executed = input.executed;
+    if (input.objectiveAchieved !== undefined) columns.objectiveAchieved = input.objectiveAchieved;
+    if (input.objectiveAchieved === true || input.objectiveAchieved === false) {
+        columns.executed = true;
+    }
+
+    return columns;
 }
 
 function parseMeetingDate(value: string): Date {
@@ -291,6 +315,7 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
         objective: input.objective ?? "",
         participants: input.participants ?? "",
         color: input.color ?? "#f5f5f4",
+        ...qualificationColumns(input),
     }).returning();
 
     await syncIssues(meeting.id, input.issues);
@@ -317,6 +342,7 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
     if (changes.participants !== undefined) payload.participants = changes.participants;
     if (changes.color !== undefined) payload.color = changes.color;
     if (changes.projectId !== undefined) payload.projectId = changes.projectId;
+    Object.assign(payload, qualificationColumns(changes));
 
     if (Object.keys(payload).length) {
         await db.update(meetings)
@@ -380,6 +406,7 @@ export async function listMeetings(userId: number, filters: MeetingListFilters =
         projectName: projects.name,
         projectColor: projects.color,
         executed: meetings.executed,
+        objectiveAchieved: meetings.objectiveAchieved,
     })
         .from(meetings)
         .leftJoin(projects, eq(meetings.projectId, projects.id))
@@ -400,6 +427,7 @@ export async function listMeetings(userId: number, filters: MeetingListFilters =
             ? { name: row.projectName, color: row.projectColor }
             : null,
         executed: row.executed,
+        objectiveAchieved: row.objectiveAchieved,
     }));
 
     return {

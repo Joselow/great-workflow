@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import dayjs from 'dayjs'
 
 import MeetingDateFiltersControl from '@/components/Meeting/MeetingDateFilters.vue'
 import MeetingTable from '@/components/Meeting/MeetingTable.vue'
 import { useMeeting } from '@/composables/useMeeting'
 import { deleteFromArray } from '@/utils/array'
 import { endOfMonth } from '@/utils/date'
+import dayjs from 'dayjs'
 
 import type { MeetingDateFilters, MeetingListItem } from '@/interfaces/meeting'
 
@@ -114,6 +114,7 @@ loadMeetings()
       >
         Mostrando {{ items.length }} de {{ total }}
       </p>
+
       <MeetingTable
         :meetings="items"
         :empty-label="emptyLabel"

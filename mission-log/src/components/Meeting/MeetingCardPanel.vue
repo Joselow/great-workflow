@@ -43,7 +43,7 @@ const removeCard = (id: string) => {
       Sin cards asociadas.
     </p>
 
-    <ul v-else class="space-y-2">
+    <ul v-else class="space-y-2 max-h-[250px] overflow-auto">
       <li
         v-for="card in cards"
         :key="card.id"

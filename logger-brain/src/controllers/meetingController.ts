@@ -18,6 +18,10 @@ export const createMeeting = async (req: Request, res: Response) => {
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     } = req.body;
 
     const meeting = await meetingService.createMeeting(user.id, {
@@ -32,6 +36,10 @@ export const createMeeting = async (req: Request, res: Response) => {
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     });
 
     return simpleSuccess(res, 201, meeting);
@@ -59,6 +67,10 @@ export const updateMeeting = async (req: Request, res: Response) => {
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     } = req.body;
 
     const meeting = await meetingService.updateMeeting(id, user.id, {
@@ -73,6 +85,10 @@ export const updateMeeting = async (req: Request, res: Response) => {
         issues,
         cardIds,
         logLinks,
+        summary,
+        lessons,
+        executed,
+        objectiveAchieved,
     });
 
     return simpleSuccess(res, 200, meeting);

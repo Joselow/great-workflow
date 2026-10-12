@@ -1,15 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 
-import ConfirmModal from '@/commons/ConfirmModal.vue'
-
-const emit = defineEmits<{
-  delete: []
-}>()
 
 const root = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
-const confirmOpen = ref(false)
 const menuStyle = ref({ top: '0px', left: '0px' })
 
 const closeMenu = () => {
@@ -50,15 +44,6 @@ const toggleMenu = (event: MouseEvent) => {
   openMenu(event)
 }
 
-const askDelete = () => {
-  closeMenu()
-  confirmOpen.value = true
-}
-
-const confirmDelete = () => {
-  confirmOpen.value = false
-  emit('delete')
-}
 
 onBeforeUnmount(closeMenu)
 </script>
@@ -85,43 +70,7 @@ onBeforeUnmount(closeMenu)
       :style="menuStyle"
       role="menu"
     >
-      <button
-        type="button"
-        class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
-        role="menuitem"
-        @click="askDelete"
-      >
-      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
-        Eliminar
-      </button>
-      <button
-        type="button"
-        class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
-        role="menuitem"
-        @click="askDelete"
-      >
-      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
-        Marcar como ejecutada
-      </button>
-      <button
-        type="button"
-        class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
-        role="menuitem"
-        @click="askDelete"
-      >
-      <span class="material-symbols-outlined align-middle" style="font-size: 1.1rem;">delete</span>
-        Objetivo alcanzado
-      </button>
+     <slot />
     </div>
-
-    <ConfirmModal
-      v-model="confirmOpen"
-      title="¿Eliminar esta reunión?"
-      @confirm="confirmDelete"
-    >
-      <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-        Esta acción no se puede deshacer.
-      </p>
-    </ConfirmModal>
   </div>
 </template>

@@ -26,7 +26,7 @@ const logLinkSchema = z.object({
     source: z.enum(["log", "meeting"]),
 });
 
-export const CreateMeetingSchema = z.object({
+const meetingBody = {
     title: z.string().min(1).max(100),
     date: z.string().min(1),
     estimatedDuration: z.number().int().min(1),
@@ -38,16 +38,38 @@ export const CreateMeetingSchema = z.object({
     issues: z.array(issueSchema).optional(),
     cardIds: z.array(z.uuidv7()).optional(),
     logLinks: z.array(logLinkSchema).optional(),
-});
+    summary: z.string().nullable().optional(),
+    lessons: z.string().nullable().optional(),
+    executed: z.boolean().optional(),
+    objectiveAchieved: z.boolean().nullable().optional(),
+};
+
+const requireLessonsWhenNotAchieved = (
+    data: { objectiveAchieved?: boolean | null; lessons?: string | null },
+    ctx: z.RefinementCtx,
+) => {
+    if (data.objectiveAchieved !== false) return;
+    if (data.lessons?.trim()) return;
+
+    ctx.addIssue({
+        code: "custom",
+        message: "Lessons are required when the objective was not achieved",
+        path: ["lessons"],
+    });
+};
+
+export const CreateMeetingSchema = z.object(meetingBody).superRefine(requireLessonsWhenNotAchieved);
 
 export const verifyCreateMeetingSchema = (payload: unknown) => {
     return CreateMeetingSchema.safeParse(payload);
 };
 
-export const UpdateMeetingSchema = CreateMeetingSchema.partial().refine(
-    (data) => Object.values(data).some((value) => value !== undefined),
-    { message: "At least one field is required" }
-);
+export const UpdateMeetingSchema = z.object(meetingBody).partial()
+    .superRefine(requireLessonsWhenNotAchieved)
+    .refine(
+        (data) => Object.values(data).some((value) => value !== undefined),
+        { message: "At least one field is required" }
+    );
 
 export const verifyUpdateMeetingSchema = (payload: unknown) => {
     return UpdateMeetingSchema.safeParse(payload);
