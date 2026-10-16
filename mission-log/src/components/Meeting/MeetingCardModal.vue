@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, } from 'vue'
 import { useRouter } from 'vue-router'
+import { ref, watch, } from 'vue'
 
 import ModalBase from '@/commons/ModalBase.vue'
 import CardForm from '@/components/Card/CardForm.vue'
 import EmptyRecords from '@/commons/EmptyRecords.vue'
 
 import { projectStore } from '@/store/projectStore'
+
 import { useCard } from '@/composables/useCard'
-import { errorToast } from '@/composables/useAlerts'
+import { errorToast, successToast } from '@/composables/useAlerts'
+
 import { debounce } from '@/utils/debounce'
 
 import { DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
@@ -74,7 +76,8 @@ watch(open, (isOpen) => {
 
 const pick = (card: CardListItem) => {
   emit('pick', card)
-  open.value = false
+  successToast('Agregadp', 1000)
+  // open.value = false
 }
 
 const toPayload = (current: CardDraft): CardWritePayload => ({
@@ -199,8 +202,6 @@ const showCard = (card: CardListItem) => {
               rounded-lg border border-2 dark:border-white/10 px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5"
               :style="{ borderColor: (card.color) }"
               @dblclick="showCard(card)"
-              @click="pick(card)"
-
             > 
               <div class="flex min-w-0 flex-1 items-center">
                 <span
@@ -213,7 +214,7 @@ const showCard = (card: CardListItem) => {
                 <span 
                   title="Ver card (dblclick card)"
                   class="material-symbols-outlined align-middle hover:text-indigo-500"
-                  @click="showCard(card)"
+                  @click.stop="showCard(card)"
                   >multimodal_hand_eye</span>
 
                 <span 
@@ -221,7 +222,7 @@ const showCard = (card: CardListItem) => {
                   class="material-symbols-outlined align-middle
                     hover:text-blue-500
                   "
-                  @click="pick(card)"
+                  @click.stop="pick(card)"
                   >add</span>
               </div>
             </button>

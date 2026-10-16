@@ -19,6 +19,11 @@ export interface MeetingWriteLogLink {
   source: LogMeetingSource
 }
 
+export interface MeetingNextStep {
+  logId?: string
+  description: string
+}
+
 export interface Meeting {
   id: string
   userId: number
@@ -53,6 +58,7 @@ export interface MeetingWritePayload {
   issues: MeetingIssue[]
   cardIds: string[]
   logLinks: MeetingWriteLogLink[]
+  nextSteps: MeetingNextStep[]
   lessons: string | null
   summary: string | null
   executed: boolean

@@ -6,6 +6,7 @@ import ConfirmModal from '@/commons/ConfirmModal.vue'
 import DangerZone from '@/commons/DangerZone.vue'
 import CardProjectSelect from '@/components/Card/CardProjectSelect.vue'
 import MeetingIssueList from '@/components/Meeting/MeetingIssueList.vue'
+import MeetingNextStepList from '@/components/Meeting/MeetingNextStepList.vue'
 import MeetingCardPanel from '@/components/Meeting/MeetingCardPanel.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import Loader from '@/commons/Loader.vue'
@@ -21,7 +22,7 @@ import { generateMeetingSummary } from '@/helpers/meetingSummary'
 import { COLOR_ISSUE, DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
 import { cardSurfaceStyle, isLightHex } from '@/helpers/cardColor'
 
-import type { MeetingDraft, MeetingQualificationPayload, MeetingWritePayload } from '@/interfaces/meeting'
+import type { MeetingDraft, MeetingLogLink, MeetingNextStep, MeetingQualificationPayload, MeetingWriteLogLink, MeetingWritePayload } from '@/interfaces/meeting'
 
 const MeetingQualificationModal = defineAsyncComponent(
   () => import('@/components/Meeting/MeetingQualificationModal.vue'),
@@ -46,6 +47,19 @@ const emptyToNull = (value: string | null) => {
   return trimmed ? trimmed : null
 }
 
+const nextStepsFromLogs = (logs: MeetingLogLink[]): MeetingNextStep[] => {
+  const steps = logs
+    .filter((log) => log.source === 'meeting')
+    .map((log) => ({ logId: log.id, description: log.description }))
+
+  return steps.length ? steps : [{ description: '' }]
+}
+
+const attachedLogLinks = (logs: MeetingLogLink[]): MeetingWriteLogLink[] =>
+  logs
+    .filter((log) => log.source === 'log')
+    .map((log) => ({ logId: log.id, source: 'log' }))
+
 const pad = (value: number) => String(value).padStart(2, '0')
 
 const toDatetimeLocal = (value?: string) => {
@@ -67,6 +81,7 @@ const emptyDraft = (): MeetingDraft => ({
   issues: [{ name: '', color: COLOR_ISSUE }],
   cardIds: [],
   logLinks: [],
+  nextSteps: [{ description: '' }],
   cards: [],
   lessons: null,
   summary: null,
@@ -85,7 +100,13 @@ const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
   projectId: current.projectId,
   issues: current.issues.filter((item) => item.name.trim()),
   cardIds: current.cards.map((card) => card.id),
-  logLinks: current.logLinks,
+  logLinks: current.logLinks.filter((link) => link.source === 'log'),
+  nextSteps: current.nextSteps
+    .map((step) => ({
+      ...(step.logId ? { logId: step.logId } : {}),
+      description: step.description.trim(),
+    }))
+    .filter((step) => step.description.length > 0),
   lessons: emptyToNull(current.lessons),
   summary: emptyToNull(current.summary),
   executed: current.executed,
@@ -127,7 +148,8 @@ const startView = async () => {
     projectId: data.projectId,
     issues: data.issues?.length ? data.issues : [{ name: '', color: DEFAULT_PROJECT_COLOR }],
     cardIds: data.cards.map((card) => card.id),
-    logLinks: data.logs.map((log) => ({ logId: log.id, source: log.source })),
+    logLinks: attachedLogLinks(data.logs),
+    nextSteps: nextStepsFromLogs(data.logs),
     cards: data.cards,
     lessons: data.lessons,
     summary: data.summary,
@@ -162,6 +184,20 @@ const handleSaveClick = () => {
     return
   }
 
+  const keptSteps = draft.value.nextSteps
+    .map((step) => step.description.trim())
+    .filter((description) => description.length > 0)
+
+  if (keptSteps.some((description) => description.length < 2)) {
+    errorToast('Cada siguiente paso necesita al menos 2 caracteres')
+    return
+  }
+
+  if (keptSteps.length && !draft.value.projectId) {
+    errorToast('Elige un proyecto para guardar los siguientes pasos')
+    return
+  }
+
   onModalConfirm()
 }
 
@@ -181,7 +217,8 @@ const handleConfirmSave = async () => {
       date: toDatetimeLocal(data.date),
       issues: data.issues,
       cards: data.cards,
-      logLinks: data.logs.map((log) => ({ logId: log.id, source: log.source })),
+      logLinks: attachedLogLinks(data.logs),
+      nextSteps: nextStepsFromLogs(data.logs),
       executed: data.executed,
       objectiveAchieved: data.objectiveAchieved,
       summary: data.summary,
@@ -194,7 +231,14 @@ const handleConfirmSave = async () => {
   const { success, data } = await createMeeting(payload)
   if (!success || !data) return
 
-  draft.value.id = data.id
+  draft.value = {
+    ...draft.value,
+    id: data.id,
+    issues: data.issues,
+    cards: data.cards,
+    logLinks: attachedLogLinks(data.logs),
+    nextSteps: nextStepsFromLogs(data.logs),
+  }
   offModalConfirm()
   await router.replace({ name: 'editMeeting', params: { id: data.id } })
 }
@@ -213,6 +257,7 @@ const copyMeetingSummary = async () => {
     objective: draft.value.objective,
     issues: draft.value.issues,
     participants: draft.value.participants,
+    nextSteps: draft.value.nextSteps,
   })
 
   textDataStore.setTextData(text, 'markdown')
@@ -356,47 +401,12 @@ const handleConfirmDelete = async (id: string) => {
     >
       <div class="grid gap-6 md:grid-cols-[1fr_18rem]">
         <div class="min-w-0 space-y-6">
-          <input
-            v-model="draft.title"
-            type="text"
-            maxlength="100"
-            placeholder="Título de la reunión"
-            class="w-full bg-transparent text-3xl font-semibold text-gray-900 dark:text-white border-0 focus:outline-none placeholder:text-gray-400"
-          />
-
-          <label class="block text-xs font-semibold 
-          ">
-            Fecha y Hora
-            
-            <div class="relative mt-2 flex items-center justify-between rounded-md border border-2 
-              border-black/60 p-2 py-1 dark:border-white/35">
-              <span class="text-md font-bold">
-                {{ formatHours(draft.date) }}
-              </span>
-
-              <span class="material-symbols-outlined align-middle">
-                date_range
-              </span>
-
-              <input
-                v-model="draft.date"
-                type="datetime-local"
-                aria-label="Fecha y hora"
-                class="absolute inset-0 cursor-pointer opacity-0 px-3
-                "
-              />
-            </div>
-          </label>
-
-          <label class=" block text-xs font-semibold text-blue-600
-          dark:text-blue-400">
-            Estado actual
-            <textarea
-              v-model="draft.topicStatus"
-              rows="3"
-              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm text-gray-800 dark:text-gray-100 outline-none"
-            />
-          </label>
+          <p
+            class="text-3xl font-semibold"
+            :class="draft.title.trim() ? 'text-gray-900 dark:text-white' : 'text-gray-400'"
+          >
+            {{ draft.title.trim() || 'Título de la reunión' }}
+          </p>
 
           <label class="text-green-600 dark:text-green-400 block text-xs font-semibold 
           ">
@@ -409,7 +419,30 @@ const handleConfirmDelete = async (id: string) => {
             />
           </label>
 
+          <label class=" block text-xs font-semibold text-blue-600
+          dark:text-blue-400">
+            Estado actual
+            <textarea
+              v-model="draft.topicStatus"
+              rows="3"
+              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm text-gray-800 dark:text-gray-100 outline-none"
+            />
+          </label>
+
+          <label class="block text-xs font-semibold">
+            Título
+            <input
+              v-model="draft.title"
+              type="text"
+              maxlength="100"
+              placeholder="Título de la reunión"
+              class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm text-gray-800 outline-none dark:border-white/15 dark:bg-white/5 dark:text-gray-100"
+            />
+          </label>
+
           <MeetingIssueList v-model="draft.issues" />
+
+          <MeetingNextStepList v-model="draft.nextSteps" />
 
           <label class="block text-xs font-semibold 
           text-sky-600 dark:text-sky-400"
@@ -435,6 +468,30 @@ const handleConfirmDelete = async (id: string) => {
               rows="2"
               class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm outline-none"
             />
+          </label>
+
+          <label class="block text-xs font-semibold 
+          ">
+            Fecha y Hora
+            
+            <div class="relative mt-2 flex items-center justify-between rounded-md border border-2 
+              border-black/60 p-2 py-1 dark:border-white/35">
+              <span class="text-[.9rem] font-bold">
+                {{ formatHours(draft.date) }}
+              </span>
+
+              <span class="material-symbols-outlined align-middle">
+                date_range
+              </span>
+
+              <input
+                v-model="draft.date"
+                type="datetime-local"
+                aria-label="Fecha y hora"
+                class="absolute inset-0 cursor-pointer opacity-0 px-3
+                "
+              />
+            </div>
           </label>
         </div>
 

@@ -17,6 +17,11 @@ export interface MeetingLogLinkInput {
     source: LogMeetingSource;
 }
 
+export interface MeetingNextStepInput {
+    logId?: string;
+    description: string;
+}
+
 export interface MeetingWriteInput {
     title?: string;
     date?: string;
@@ -29,6 +34,7 @@ export interface MeetingWriteInput {
     issues?: { id?: number; name: string; color?: string }[];
     cardIds?: string[];
     logLinks?: MeetingLogLinkInput[];
+    nextSteps?: MeetingNextStepInput[];
     summary?: string | null;
     lessons?: string | null;
     executed?: boolean;
@@ -96,6 +102,79 @@ function uniqueIds(ids: string[]): string[] {
     return [...new Set(ids)];
 }
 
+const LIMA = "America/Lima";
+
+function formatMeetingStamp(date: Date): string {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: LIMA,
+        year: "2-digit",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+    }).formatToParts(date);
+
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((item) => item.type === type)?.value ?? "";
+
+    return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")}:${part("second")} ${part("dayPeriod").toUpperCase()}`;
+}
+
+export function nextStepLabels(title: string, date: Date, projectName: string) {
+    const stamp = formatMeetingStamp(date);
+    const prefix = "Reunión ";
+    const suffix = ` ${stamp}`;
+    const room = 100 - prefix.length - suffix.length;
+    const trimmedTitle = room > 0 ? title.trim().slice(0, room) : "";
+    const responsible = `${prefix}${trimmedTitle}${suffix}`.slice(0, 100);
+
+    const tagsPrefix = "reunión, ";
+    const tagsRoom = 255 - tagsPrefix.length;
+    const tags = `${tagsPrefix}${projectName.trim().slice(0, Math.max(tagsRoom, 0))}`.slice(0, 255);
+
+    return { responsible, tags };
+}
+
+function keptNextSteps(steps: MeetingNextStepInput[]) {
+    return steps
+        .map((step) => ({
+            logId: step.logId,
+            description: step.description.trim(),
+        }))
+        .filter((step) => step.description.length > 0);
+}
+
+function assertNextSteps(steps: MeetingNextStepInput[] | undefined, projectId: string | null) {
+    if (!steps) return;
+
+    const kept = keptNextSteps(steps);
+    if (kept.some((step) => step.description.length < 2)) {
+        throw new BadRequestError400("Next step description must be at least 2 characters");
+    }
+    if (kept.length && !projectId) {
+        throw new BadRequestError400("Project is required for next steps");
+    }
+}
+
+function assertNextStepIds(
+    steps: MeetingNextStepInput[] | undefined,
+    linked: { id: string; source: LogMeetingSource }[],
+) {
+    if (!steps) return;
+
+    const allowed = new Set(
+        linked.filter((log) => log.source === "meeting").map((log) => log.id),
+    );
+
+    for (const step of steps) {
+        if (step.logId && step.description.trim() && !allowed.has(step.logId)) {
+            throw new BadRequestError400("Next step log not found");
+        }
+    }
+}
+
 function startOfDay(dateStr: string): Date {
     const [year, month, day] = dateStr.split("-").map(Number);
     return new Date(year, month - 1, day);
@@ -106,11 +185,13 @@ function startOfNextDay(dateStr: string): Date {
     return new Date(year, month - 1, day + 1);
 }
 
-async function assertOwnedCards(cardIds: string[], userId: number) {
+type MeetingDb = typeof db;
+
+async function assertOwnedCards(cardIds: string[], userId: number, client: MeetingDb = db) {
     const ids = uniqueIds(cardIds);
     if (!ids.length) return;
 
-    const rows = await db.select({ id: cards.id }).from(cards)
+    const rows = await client.select({ id: cards.id }).from(cards)
         .where(and(eq(cards.userId, userId), inArray(cards.id, ids)));
 
     if (rows.length !== ids.length) {
@@ -118,11 +199,11 @@ async function assertOwnedCards(cardIds: string[], userId: number) {
     }
 }
 
-async function assertOwnedLogs(logIds: string[], userId: number) {
+async function assertOwnedLogs(logIds: string[], userId: number, client: MeetingDb = db) {
     const ids = uniqueIds(logIds);
     if (!ids.length) return;
 
-    const rows = await db.select({ id: logs.id }).from(logs)
+    const rows = await client.select({ id: logs.id }).from(logs)
         .where(and(eq(logs.userId, userId), inArray(logs.id, ids)));
 
     if (rows.length !== ids.length) {
@@ -130,11 +211,11 @@ async function assertOwnedLogs(logIds: string[], userId: number) {
     }
 }
 
-async function syncCardLinks(meetingId: string, userId: number, cardIds: string[]) {
+async function syncCardLinks(meetingId: string, userId: number, cardIds: string[], client: MeetingDb = db) {
     const nextIds = uniqueIds(cardIds);
-    await assertOwnedCards(nextIds, userId);
+    await assertOwnedCards(nextIds, userId, client);
 
-    const existing = await db.select().from(cardMeetings)
+    const existing = await client.select().from(cardMeetings)
         .where(eq(cardMeetings.meetingId, meetingId));
 
     const existingIds = new Set(existing.map((row) => row.cardId));
@@ -144,18 +225,18 @@ async function syncCardLinks(meetingId: string, userId: number, cardIds: string[
     const toInsert = nextIds.filter((id) => !existingIds.has(id));
 
     if (toDelete.length) {
-        await db.delete(cardMeetings)
+        await client.delete(cardMeetings)
             .where(and(eq(cardMeetings.meetingId, meetingId), inArray(cardMeetings.cardId, toDelete)));
     }
 
     if (toInsert.length) {
-        await db.insert(cardMeetings).values(
+        await client.insert(cardMeetings).values(
             toInsert.map((cardId) => ({ cardId, meetingId }))
         );
     }
 }
 
-async function syncLogLinks(meetingId: string, userId: number, logLinks: MeetingLogLinkInput[]) {
+async function syncLogLinks(meetingId: string, userId: number, logLinks: MeetingLogLinkInput[], client: MeetingDb = db) {
     const uniqueLinks = new Map<string, LogMeetingSource>();
     for (const link of logLinks) {
         if (!uniqueLinks.has(link.logId)) {
@@ -164,30 +245,102 @@ async function syncLogLinks(meetingId: string, userId: number, logLinks: Meeting
     }
 
     const nextIds = [...uniqueLinks.keys()];
-    await assertOwnedLogs(nextIds, userId);
+    await assertOwnedLogs(nextIds, userId, client);
 
-    const existing = await db.select().from(logMeetings)
+    const existing = await client.select().from(logMeetings)
         .where(eq(logMeetings.meetingId, meetingId));
 
     const existingByLog = new Map(existing.map((row) => [row.logId, row]));
     const next = new Set(nextIds);
 
-    const toDelete = existing.filter((row) => !next.has(row.logId)).map((row) => row.logId);
+    const toDelete = existing
+        .filter((row) => row.source === "log" && !next.has(row.logId))
+        .map((row) => row.logId);
     const toInsert = nextIds.filter((id) => !existingByLog.has(id));
 
     if (toDelete.length) {
-        await db.delete(logMeetings)
+        await client.delete(logMeetings)
             .where(and(eq(logMeetings.meetingId, meetingId), inArray(logMeetings.logId, toDelete)));
     }
 
     if (toInsert.length) {
-        await db.insert(logMeetings).values(
+        await client.insert(logMeetings).values(
             toInsert.map((logId) => ({
                 logId,
                 meetingId,
                 source: uniqueLinks.get(logId) ?? "log",
             }))
         );
+    }
+}
+
+async function syncNextSteps(
+    client: MeetingDb,
+    meetingId: string,
+    userId: number,
+    steps: MeetingNextStepInput[] | undefined,
+    meeting: { title: string; date: Date; projectId: string | null; projectName: string },
+) {
+    if (steps === undefined) return;
+
+    const kept = keptNextSteps(steps);
+    const existing = await client.select({ logId: logMeetings.logId }).from(logMeetings)
+        .where(and(eq(logMeetings.meetingId, meetingId), eq(logMeetings.source, "meeting")));
+
+    const existingIds = new Set(existing.map((row) => row.logId));
+    const withId = kept.filter((step): step is { logId: string; description: string } => Boolean(step.logId));
+    const withoutId = kept.filter((step) => !step.logId);
+
+    for (const step of withId) {
+        if (!existingIds.has(step.logId)) {
+            throw new BadRequestError400("Next step log not found");
+        }
+    }
+
+    const labels = nextStepLabels(meeting.title, meeting.date, meeting.projectName);
+
+    if ((withId.length || withoutId.length) && !meeting.projectId) {
+        throw new BadRequestError400("Project is required for next steps");
+    }
+
+    const projectId = meeting.projectId ?? "";
+
+    for (const step of withId) {
+        await client.update(logs).set({
+            description: step.description,
+            responsible: labels.responsible,
+            tags: labels.tags,
+            projectId,
+        }).where(and(eq(logs.id, step.logId), eq(logs.userId, userId)));
+    }
+
+    if (withoutId.length) {
+        const created = await client.insert(logs).values(withoutId.map((step) => ({
+            userId,
+            projectId,
+            description: step.description,
+            responsible: labels.responsible,
+            tags: labels.tags,
+            completed: null,
+            comment: null,
+        }))).returning({ id: logs.id });
+
+        await client.insert(logMeetings).values(created.map((row) => ({
+            logId: row.id,
+            meetingId,
+            source: "meeting" as const,
+        })));
+    }
+
+    const keepIds = new Set(withId.map((step) => step.logId));
+    const removeIds = [...existingIds].filter((id) => !keepIds.has(id));
+
+    if (removeIds.length) {
+        await client.delete(logMeetings).where(and(
+            eq(logMeetings.meetingId, meetingId),
+            inArray(logMeetings.logId, removeIds),
+        ));
+        await client.delete(logs).where(and(eq(logs.userId, userId), inArray(logs.id, removeIds)));
     }
 }
 
@@ -236,14 +389,18 @@ async function linkedIssues(meetingId: string) {
     return rows;
 }
 
-async function syncIssues(meetingId: string, items: { id?: number; name: string; color?: string }[] | undefined) {
+async function syncIssues(
+    meetingId: string,
+    items: { id?: number; name: string; color?: string }[] | undefined,
+    client: MeetingDb = db,
+) {
     const next = cleanIssues(items);
 
-    await db.delete(issues).where(eq(issues.meetingId, meetingId));
+    await client.delete(issues).where(eq(issues.meetingId, meetingId));
 
     if (!next.length) return;
 
-    await db.insert(issues).values(
+    await client.insert(issues).values(
         next.map((item) => ({
             meetingId,
             name: item.name,
@@ -261,7 +418,8 @@ async function linkedLogs(meetingId: string) {
         })
         .from(logMeetings)
         .innerJoin(logs, eq(logMeetings.logId, logs.id))
-        .where(eq(logMeetings.meetingId, meetingId));
+        .where(eq(logMeetings.meetingId, meetingId))
+        .orderBy(asc(logs.createdAt), asc(logs.id));
 
     return rows.map((row) => ({
         id: row.id,
@@ -301,36 +459,65 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
         throw new BadRequestError400("Title, date and duration are required");
     }
 
-    await assertOwnedProject(input.projectId, userId);
+    const title = input.title.trim();
+    const date = parseMeetingDate(input.date);
+    const projectId = input.projectId ?? null;
+
+    await assertOwnedProject(projectId, userId);
     await assertOwnedCards(input.cardIds ?? [], userId);
     await assertOwnedLogs((input.logLinks ?? []).map((link) => link.logId), userId);
+    assertNextSteps(input.nextSteps, projectId);
+    assertNextStepIds(input.nextSteps, []);
 
-    const [meeting] = await db.insert(meetings).values({
-        userId,
-        projectId: input.projectId ?? null,
-        title: input.title.trim(),
-        date: parseMeetingDate(input.date),
-        estimatedDuration: input.estimatedDuration,
-        topicStatus: input.topicStatus ?? "",
-        objective: input.objective ?? "",
-        participants: input.participants ?? "",
-        color: input.color ?? "#f5f5f4",
-        ...qualificationColumns(input),
-    }).returning();
+    const projectName = projectId ? (await getProjectById(projectId))?.name ?? "" : "";
 
-    await syncIssues(meeting.id, input.issues);
-    await syncCardLinks(meeting.id, userId, input.cardIds ?? []);
-    await syncLogLinks(meeting.id, userId, input.logLinks ?? []);
+    const meeting = await db.transaction(async (tx) => {
+        const client = tx as unknown as MeetingDb;
+
+        const [created] = await client.insert(meetings).values({
+            userId,
+            projectId,
+            title,
+            date,
+            estimatedDuration: input.estimatedDuration!,
+            topicStatus: input.topicStatus ?? "",
+            objective: input.objective ?? "",
+            participants: input.participants ?? "",
+            color: input.color ?? "#f5f5f4",
+            ...qualificationColumns(input),
+        }).returning();
+
+        await syncIssues(created.id, input.issues, client);
+        await syncCardLinks(created.id, userId, input.cardIds ?? [], client);
+        await syncLogLinks(created.id, userId, input.logLinks ?? [], client);
+        await syncNextSteps(client, created.id, userId, input.nextSteps, {
+            title,
+            date,
+            projectId,
+            projectName,
+        });
+
+        return created;
+    });
 
     return withLinks(meeting);
 }
 
 export async function updateMeeting(id: string, userId: number, changes: MeetingWriteInput) {
-    await getMeetingByIdForUser(id, userId);
+    const current = await getMeetingByIdForUser(id, userId);
 
     if (changes.projectId !== undefined) {
         await assertOwnedProject(changes.projectId, userId);
     }
+
+    const projectId = changes.projectId !== undefined ? changes.projectId : current.projectId;
+    const title = changes.title !== undefined ? changes.title.trim() : current.title;
+    const date = changes.date !== undefined ? parseMeetingDate(changes.date) : new Date(current.date);
+
+    assertNextSteps(changes.nextSteps, projectId);
+    assertNextStepIds(changes.nextSteps, current.logs);
+
+    const projectName = projectId ? (await getProjectById(projectId))?.name ?? "" : "";
 
     const payload: Partial<NewMeeting> = {};
 
@@ -344,23 +531,34 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
     if (changes.projectId !== undefined) payload.projectId = changes.projectId;
     Object.assign(payload, qualificationColumns(changes));
 
-    if (Object.keys(payload).length) {
-        await db.update(meetings)
-            .set(payload)
-            .where(and(eq(meetings.id, id), eq(meetings.userId, userId)));
-    }
+    await db.transaction(async (tx) => {
+        const client = tx as unknown as MeetingDb;
 
-    if (changes.issues !== undefined) {
-        await syncIssues(id, changes.issues);
-    }
+        if (Object.keys(payload).length) {
+            await client.update(meetings)
+                .set(payload)
+                .where(and(eq(meetings.id, id), eq(meetings.userId, userId)));
+        }
 
-    if (changes.cardIds !== undefined) {
-        await syncCardLinks(id, userId, changes.cardIds);
-    }
+        if (changes.issues !== undefined) {
+            await syncIssues(id, changes.issues, client);
+        }
 
-    if (changes.logLinks !== undefined) {
-        await syncLogLinks(id, userId, changes.logLinks);
-    }
+        if (changes.cardIds !== undefined) {
+            await syncCardLinks(id, userId, changes.cardIds, client);
+        }
+
+        if (changes.logLinks !== undefined) {
+            await syncLogLinks(id, userId, changes.logLinks, client);
+        }
+
+        await syncNextSteps(client, id, userId, changes.nextSteps, {
+            title,
+            date,
+            projectId,
+            projectName,
+        });
+    });
 
     return getMeetingByIdForUser(id, userId);
 }

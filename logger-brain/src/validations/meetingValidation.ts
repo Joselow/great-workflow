@@ -26,6 +26,11 @@ const logLinkSchema = z.object({
     source: z.enum(["log", "meeting"]),
 });
 
+const nextStepSchema = z.object({
+    logId: z.uuidv7().optional(),
+    description: z.string(),
+});
+
 const meetingBody = {
     title: z.string().min(1).max(100),
     date: z.string().min(1),
@@ -38,6 +43,7 @@ const meetingBody = {
     issues: z.array(issueSchema).optional(),
     cardIds: z.array(z.uuidv7()).optional(),
     logLinks: z.array(logLinkSchema).optional(),
+    nextSteps: z.array(nextStepSchema).optional(),
     summary: z.string().nullable().optional(),
     lessons: z.string().nullable().optional(),
     executed: z.boolean().optional(),

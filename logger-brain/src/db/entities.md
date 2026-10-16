@@ -3,8 +3,6 @@ LOGS
 id uuid pk
 user_id int
 project_id uuid
-#meeting_id uuid nullable
-#type_meeting_link varchar # log-meet | meet-log | nullable
 description text      #que
 responsable varchar   #quien
 tags varchar          #categoria 
@@ -86,4 +84,11 @@ CARD_MEETING
 id pk
 card_id uuid
 meeting_id uuid
+timestamps
+---
+ISSUE
+id int pk
+meeting_id uuid
+name varchar
+color varchar
 timestamps
