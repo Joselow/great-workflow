@@ -30,6 +30,7 @@ lessons text
 timestamps 
 executed boolean
 objetive_achieved boolean
+aditional_info text
 
 ---
 PROJECTS
@@ -44,7 +45,6 @@ timestamps
 CARDS
 id uuid pk
 project_id nullable
-#meeting_id uuid nullable
 user_id id 
 name uuid
 description varchar
@@ -91,4 +91,24 @@ id int pk
 meeting_id uuid
 name varchar
 color varchar
+timestamps
+----
+REQUERIMENTS
+id uuid pk
+meeting_id uuid nullable
+project_id uuid
+user_id int
+name varchar
+timestamps
+--------
+TASKS
+id id pk
+user_id int
+project_id uuid
+meeting_id uuid nullable
+requirement_id uuid,nullable
+log_id uuid nullable
+name varchar
+description text
+completed boolean
 timestamps

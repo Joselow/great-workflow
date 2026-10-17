@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref } from 'vue'
+import { defineAsyncComponent, ref, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ConfirmModal from '@/commons/ConfirmModal.vue'
@@ -8,6 +8,7 @@ import CardProjectSelect from '@/components/Card/CardProjectSelect.vue'
 import MeetingIssueList from '@/components/Meeting/MeetingIssueList.vue'
 import MeetingNextStepList from '@/components/Meeting/MeetingNextStepList.vue'
 import MeetingCardPanel from '@/components/Meeting/MeetingCardPanel.vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import Loader from '@/commons/Loader.vue'
 
@@ -27,6 +28,9 @@ import type { MeetingDraft, MeetingLogLink, MeetingNextStep, MeetingQualificatio
 const MeetingQualificationModal = defineAsyncComponent(
   () => import('@/components/Meeting/MeetingQualificationModal.vue'),
 )
+const MeetingRequirementsTasks = defineAsyncComponent(
+  () => import('@/components/Meeting/MeetingRequirementsTasks.vue'),
+)
 import { formatHours } from '@/utils/date'
 
 const route = useRoute()
@@ -38,6 +42,7 @@ const { createMeeting, getMeetingById, updateMeeting, qualifyMeeting, deleteMeet
 const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates('modalConfirm')
 
 const draft = ref<MeetingDraft | null>(null)
+const persistedProjectId = ref<string | null>(null)
 const notFound = ref(false)
 const qualificationMounted = ref(false)
 const qualificationOpen = ref(false)
@@ -127,6 +132,7 @@ const startView = async () => {
 
   if (!id) {
     draft.value = emptyDraft()
+    persistedProjectId.value = null
     return
   }
 
@@ -156,6 +162,7 @@ const startView = async () => {
     executed: data.executed,
     objectiveAchieved: data.objectiveAchieved,
   }
+  persistedProjectId.value = data.projectId
 }
 
 startView()
@@ -224,6 +231,7 @@ const handleConfirmSave = async () => {
       summary: data.summary,
       lessons: data.lessons,
     }
+    persistedProjectId.value = data.projectId
     offModalConfirm()
     return
   }
@@ -239,8 +247,17 @@ const handleConfirmSave = async () => {
     logLinks: attachedLogLinks(data.logs),
     nextSteps: nextStepsFromLogs(data.logs),
   }
+  persistedProjectId.value = data.projectId
   offModalConfirm()
   await router.replace({ name: 'editMeeting', params: { id: data.id } })
+}
+
+const objectiveEditor = useTemplateRef<InstanceType<typeof RichTextEditor>>('objectiveEditor')
+const statusEditor = useTemplateRef<InstanceType<typeof RichTextEditor>>('statusEditor')
+
+const focusEditor = (editor: InstanceType<typeof RichTextEditor> | null, event: MouseEvent) => {
+  if (event.target instanceof HTMLElement && event.target.closest('.editor')) return
+  editor?.focus()
 }
 
 const copyMeetingSummary = async () => {
@@ -408,24 +425,37 @@ const handleConfirmDelete = async (id: string) => {
             {{ draft.title.trim() || 'Título de la reunión' }}
           </p>
 
-          <label class="text-green-600 dark:text-green-400 block text-xs font-semibold 
-          ">
+          <label
+            class="block text-xs font-semibold text-green-600 dark:text-green-400"
+            @click="focusEditor(objectiveEditor, $event)"
+          >
             Objectivo de la reunión
-            <textarea
+            <RichTextEditor
+              ref="objectiveEditor"
               v-model="draft.objective"
-              rows="2"
-              maxlength="255"
-              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm text-gray-800 dark:text-gray-100 outline-none"
+              class="mt-1"
+              multiline
+              :rows="2"
+              :maxlength="255"
             />
+            <span class="mt-1.5 flex items-center gap-1.5 text-[11px] font-normal leading-none text-gray-400 dark:text-gray-500">
+              <span class="font-semibold text-gray-500 dark:text-gray-400">Ctrl+B</span>
+              <span class="opacity-40">·</span>
+              <span class="italic">Ctrl+I</span>
+            </span>
           </label>
 
-          <label class=" block text-xs font-semibold text-blue-600
-          dark:text-blue-400">
+          <label
+            class="block text-xs font-semibold text-blue-600 dark:text-blue-400"
+            @click="focusEditor(statusEditor, $event)"
+          >
             Estado actual
-            <textarea
+            <RichTextEditor
+              ref="statusEditor"
               v-model="draft.topicStatus"
-              rows="3"
-              class="mt-1 w-full rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1.5 text-sm text-gray-800 dark:text-gray-100 outline-none"
+              class="mt-1"
+              multiline
+              :rows="3"
             />
           </label>
 
@@ -575,6 +605,12 @@ const handleConfirmDelete = async (id: string) => {
         </button>
       </div>
     </div>
+
+    <MeetingRequirementsTasks
+      v-if="draft.id && persistedProjectId"
+      :meeting-id="draft.id"
+      :project-id="persistedProjectId"
+    />
 
     <DangerZone
       v-if="draft.id"

@@ -17,16 +17,17 @@ The application SHALL render exactly one `SideBarText` instance at the authentic
 - **THEN** SideBarText SHALL NOT be rendered
 
 ### Requirement: Main content layout accommodates global sidebar
-The authenticated layout SHALL reserve space for the global sidebar without breaking responsive behavior.
+The authenticated layout SHALL place main content and the writer side by side at or above the medium breakpoint, and SHALL leave main content usable when the writer is a collapsed bottom tab below that breakpoint. The shell SHALL NOT grow wider than the viewport because of the writer.
 
 #### Scenario: Desktop layout
 - **WHEN** the viewport is at or above the medium breakpoint
-- **THEN** the main content and SideBarText SHALL display side by side as today in LogsView
+- **THEN** main content and the writer SHALL display side by side
+- **AND** a closed writer SHALL NOT add a horizontal scrollbar to the page
 
 #### Scenario: Mobile layout
-- **WHEN** the viewport is below the medium breakpoint
-- **THEN** SideBarText SHALL use its bottom-panel responsive behavior
-- **AND** main content SHALL remain scrollable and usable
+- **WHEN** the viewport is below the medium breakpoint and the writer is collapsed
+- **THEN** main content SHALL remain scrollable and usable
+- **AND** the writer SHALL use its bottom-tab behavior
 
 ### Requirement: LogsView no longer owns SideBarText
 Individual views SHALL NOT import or render SideBarText directly.

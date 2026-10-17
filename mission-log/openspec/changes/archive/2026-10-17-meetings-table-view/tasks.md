@@ -28,7 +28,7 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Open the meetings view and verify the first request uses `from`/`to` for the current month and the table shows the basic columns
-- [ ] 6.2 Change the range, clear it, and enter an invalid pair; verify the network calls match the spec (valid pair sends both dates, clear omits both, invalid pair sends nothing)
-- [ ] 6.3 Delete a row from the menu and verify it disappears after confirm and stays after cancel
-- [ ] 6.4 Open a row and verify it lands on the planning form, and verify the screen has no calendar control
+- [x] 6.1 Open the meetings view and verify the first request uses `from`/`to` for the current month and the table shows the basic columns
+- [x] 6.2 Change the range, clear it, and enter an invalid pair; verify the network calls match the spec (valid pair sends both dates, clear omits both, invalid pair sends nothing)
+- [x] 6.3 Delete a row from the menu and verify it disappears after confirm and stays after cancel
+- [x] 6.4 Open a row and verify it lands on the planning form, and verify the screen has no calendar control

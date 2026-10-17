@@ -41,6 +41,12 @@ const onTab = () => {
   
 }
 
+const focusDescription = () => {
+  descriptionRef.value?.focus()
+}
+
+defineExpose({ focusDescription })
+
 watch(selectedLog, (newVal) => {
   if (newVal && newVal.id) {
     log.id = newVal.id

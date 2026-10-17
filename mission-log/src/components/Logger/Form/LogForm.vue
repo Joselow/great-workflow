@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import StoreComment from './SaveComment.vue'
@@ -16,6 +16,7 @@ import { useProject } from '@/composables/useProject.ts';
 
 import { errorToast } from '@/composables/useAlerts.ts';
 import { useShowStates } from '@/composables/useShowStates.ts';
+import { keyboardCommands } from '@/composables/useKeyboardCommands';
 
 import { generateLogInfo } from '@/helpers/logInfo.ts';
 
@@ -33,6 +34,9 @@ const emits = defineEmits<{
   update: [log: Log],
   delete: [log: Log],
 }>()
+
+const { setClearSelectedLog } = keyboardCommands
+const logStoreForm = ref<{ focusDescription: () => void } | null>(null)
 
 const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates("modalConfirm");
 const { modalDelete, onModalDelete, offModalDelete } = useShowStates("modalDelete");
@@ -156,27 +160,16 @@ const handleGenerateInfo = () => {
   textDataStore.appendTextData(data, 'markdown')
 }
 
-const handleKeyDown = (event: KeyboardEvent) => {
-  const target = event.target as HTMLElement | null
-  const isTypingInField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA'
-
-  if (event.key === '+' && !isTypingInField) {
-    if (selectedLog.value?.id) {
-      event.preventDefault()
-      clearLog()
-    }
-  }
-};
-
 onMounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-  window.addEventListener('keydown', handleKeyDown);
+  setClearSelectedLog(() => {
+    clearLog()
+    logStoreForm.value?.focusDescription()
+  })
 })
 
-
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-});
+  setClearSelectedLog(null)
+})
 </script>
 
 <template>
@@ -242,6 +235,7 @@ onUnmounted(() => {
 
     <div class="mt-2">
       <LogStore
+        ref="logStoreForm"
         @create="handleCreate"
         @update="handleUpdate"
       />

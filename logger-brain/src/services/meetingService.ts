@@ -8,9 +8,12 @@ import { issues } from "../db/schemas/issues.js";
 import { cards } from "../db/schemas/cards.js";
 import { logs } from "../db/schemas/logs.js";
 import { projects } from "../db/schemas/projects.js";
+import { requirements } from "../db/schemas/requirements.js";
+import { tasks } from "../db/schemas/tasks.js";
 import { getProjectById } from "./projectService.js";
 import { BadRequestError400 } from "../errors/BadRequestError400.js";
 import { NotFoundError404 } from "../errors/NotFoundError404.js";
+import { nextStepTags } from "../utils/objectiveKeywords.js";
 
 export interface MeetingLogLinkInput {
     logId: string;
@@ -122,7 +125,7 @@ function formatMeetingStamp(date: Date): string {
     return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")}:${part("second")} ${part("dayPeriod").toUpperCase()}`;
 }
 
-export function nextStepLabels(title: string, date: Date, projectName: string) {
+export function nextStepLabels(title: string, date: Date, projectName: string, objective: string) {
     const stamp = formatMeetingStamp(date);
     const prefix = "Reunión ";
     const suffix = ` ${stamp}`;
@@ -130,11 +133,7 @@ export function nextStepLabels(title: string, date: Date, projectName: string) {
     const trimmedTitle = room > 0 ? title.trim().slice(0, room) : "";
     const responsible = `${prefix}${trimmedTitle}${suffix}`.slice(0, 100);
 
-    const tagsPrefix = "reunión, ";
-    const tagsRoom = 255 - tagsPrefix.length;
-    const tags = `${tagsPrefix}${projectName.trim().slice(0, Math.max(tagsRoom, 0))}`.slice(0, 255);
-
-    return { responsible, tags };
+    return { responsible, tags: nextStepTags(projectName, objective) };
 }
 
 function keptNextSteps(steps: MeetingNextStepInput[]) {
@@ -279,7 +278,7 @@ async function syncNextSteps(
     meetingId: string,
     userId: number,
     steps: MeetingNextStepInput[] | undefined,
-    meeting: { title: string; date: Date; projectId: string | null; projectName: string },
+    meeting: { title: string; date: Date; projectId: string | null; projectName: string; objective: string },
 ) {
     if (steps === undefined) return;
 
@@ -297,7 +296,7 @@ async function syncNextSteps(
         }
     }
 
-    const labels = nextStepLabels(meeting.title, meeting.date, meeting.projectName);
+    const labels = nextStepLabels(meeting.title, meeting.date, meeting.projectName, meeting.objective);
 
     if ((withId.length || withoutId.length) && !meeting.projectId) {
         throw new BadRequestError400("Project is required for next steps");
@@ -495,6 +494,7 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
             date,
             projectId,
             projectName,
+            objective: input.objective ?? "",
         });
 
         return created;
@@ -518,6 +518,7 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
     assertNextStepIds(changes.nextSteps, current.logs);
 
     const projectName = projectId ? (await getProjectById(projectId))?.name ?? "" : "";
+    const objective = changes.objective !== undefined ? changes.objective : current.objective;
 
     const payload: Partial<NewMeeting> = {};
 
@@ -557,6 +558,7 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
             date,
             projectId,
             projectName,
+            objective,
         });
     });
 
@@ -565,6 +567,14 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
 
 export async function deleteMeeting(id: string, userId: number) {
     await getMeetingByIdForUser(id, userId);
+
+    await db.update(requirements)
+        .set({ meetingId: null })
+        .where(and(eq(requirements.meetingId, id), eq(requirements.userId, userId)));
+
+    await db.update(tasks)
+        .set({ meetingId: null })
+        .where(and(eq(tasks.meetingId, id), eq(tasks.userId, userId)));
 
     await db.delete(issues).where(eq(issues.meetingId, id));
     await db.delete(cardMeetings).where(eq(cardMeetings.meetingId, id));

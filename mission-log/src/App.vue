@@ -1,89 +1,25 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted } from 'vue';
-import { RouterView, useRoute, useRouter } from 'vue-router';
+import { computed, defineAsyncComponent, onMounted, onUnmounted } from 'vue';
+import { RouterView, useRoute } from 'vue-router';
 
 import Header from './components/Header.vue';
 import ToastLauncher from './commons/ToastLauncher.vue';
 import SideBarText from './commons/SideBarText.vue';
 import FullScreenLoader from './commons/FullScreenLoader.vue';
 
-const ProjectDrawer = defineAsyncComponent(() => import('./components/Project/ProjectDrawer.vue'));
-
 import { projectStore } from './store/projectStore';
 import { authStore } from './store/authStore';
-import { useProject } from './composables/useProject';
+import { keyboardCommands } from './composables/useKeyboardCommands';
 
-const { renderProjectDrawer, drawerOpen, closeDrawer } = projectStore;
+const ProjectDrawer = defineAsyncComponent(() => import('./components/Project/ProjectDrawer.vue'));
+const KeyboardShortcutsModal = defineAsyncComponent(() => import('./components/KeyboardShortcutsModal.vue'));
+
+const { renderProjectDrawer } = projectStore;
 const { user } = authStore;
 
 const route = useRoute();
-const router = useRouter();
-
-const { showProjectsDrawer } = useProject();
-
-const isTypingTarget = (target: EventTarget | null) => {
-  if (!(target instanceof HTMLElement)) return false
-
-  const tag = target.tagName
-
-  return (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    target.isContentEditable
-  )
-}
-
-const handleKeydown = (event: KeyboardEvent) => {
-  if (isTypingTarget(event.target)) return
-
-  const isShiftC =
-        event.shiftKey &&
-        event.key.toLowerCase() === 'c'
-
-  const isShiftP =
-        event.shiftKey &&
-        event.key.toLowerCase() === 'p'
-
-  const isShiftL =
-        event.shiftKey &&
-        event.key.toLowerCase() === 'l'
-
-  const isShiftM =
-        event.shiftKey &&
-        event.key.toLowerCase() === 'm'
-
-
-  if (isShiftP) {
-    console.log('isShiftP')
-    event.preventDefault()
-    if (drawerOpen.value) {
-      closeDrawer()
-    }
-    else {
-      showProjectsDrawer(route.path)
-    } 
-    return
-  }
-  if (isShiftC) {
-    console.log('isShiftC')
-    event.preventDefault()
-    router.push({ name: 'cards' })
-    return
-  }
-  if (isShiftL) {
-    console.log('isShiftL')
-    event.preventDefault()
-    router.push({ name: 'logger' })
-    return
-  }
-  if (isShiftM) {
-    event.preventDefault()
-    router.push({ name: 'meetings' })
-    return
-  }
-  console.log('no keydown')
-}
+const helpOpen = computed(() => keyboardCommands.helpOpen.value);
+const { handleKeydown } = keyboardCommands;
 
 
 onMounted(() => {
@@ -107,15 +43,17 @@ onUnmounted(() => {
         class="max-w-6xl mx-auto"
         :full="true" />
 
-      <div class="flex min-w-0 max-w-full relative">
+      <div class="relative flex min-w-0 max-w-full">
         <ProjectDrawer v-if="renderProjectDrawer" />
 
-        <main class="flex-1 w-full min-w-0 p-6 md:pr-0">
+        <main class="min-w-0 flex-1 overflow-x-hidden p-6 pb-16 md:pb-6 md:pr-0">
           <RouterView />
         </main>
 
         <SideBarText />
       </div>
+
+      <KeyboardShortcutsModal v-if="helpOpen" />
     </template>
 
     <RouterView v-else />

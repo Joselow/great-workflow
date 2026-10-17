@@ -3,12 +3,34 @@ import ThemeToggle from './ThemeToggle.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue';
 import HeaderProjectSlot from '@/components/Header/HeaderProjectSlot.vue';
 
+import { useRoute } from 'vue-router'
+
 import { useAuth } from '../composables/useAuth'
 import { useShowStates } from '@/composables/useShowStates.ts';
+import { keyboardCommands } from '@/composables/useKeyboardCommands';
 
 const nameApp = import.meta.env.VITE_NAME_APP ?? 'NAME'
 
+const route = useRoute()
 const { logout } = useAuth()
+const { openHelp } = keyboardCommands
+
+const sectionLinks = [
+  { label: 'Logs', name: 'logger' },
+  { label: 'Reuniones', name: 'meetings' },
+  { label: 'Requerimientos', name: 'requirements' },
+  { label: 'Tareas', name: 'tasks' },
+  { label: 'Cards', name: 'cards' },
+] as const
+
+const isCurrentSection = (label: string) => {
+  if (label === 'Logs') return route.name === 'home' || route.name === 'logger'
+  if (label === 'Reuniones') return route.path.startsWith('/meetings')
+  if (label === 'Cards') return route.path.startsWith('/cards')
+  if (label === 'Requerimientos') return route.name === 'requirements'
+  if (label === 'Tareas') return route.name === 'tasks'
+  return false
+}
 
 const props = withDefaults(defineProps<{
   full?: boolean
@@ -62,6 +84,15 @@ const handleConfirmed = () => {
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            class="cursor-pointer inline-flex items-center justify-center rounded-full px-2 py-1 text-gray-500 transition-colors hover:bg-black/5 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label="Atajos de teclado"
+            title="Atajos de teclado"
+            @click="openHelp"
+          >
+            <span class="material-symbols-outlined text-[22px] leading-none">keyboard</span>
+          </button>
           <ThemeToggle />
           <button class="cursor-pointer text-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1 rounded-full text-rose-400 transition-colors"
             title="Logout"
@@ -71,6 +102,22 @@ const handleConfirmed = () => {
           </button>
         </div>
       </div>
+
+      <nav
+        class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-black/5 px-4 py-2 text-sm dark:border-white/10"
+        aria-label="Secciones"
+      >
+        <router-link
+          v-for="link in sectionLinks"
+          :key="link.name"
+          :to="{ name: link.name }"
+          :class="isCurrentSection(link.label)
+            ? 'font-semibold text-brand-orange'
+            : 'text-gray-600 dark:text-gray-300'"
+        >
+          {{ link.label }}
+        </router-link>
+      </nav>
     </header>
   </div>
 </template>

@@ -57,6 +57,13 @@
       "when": 1791603950584,
       "tag": "0007_meeting_issues",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792220671423,
+      "tag": "0008_requirements_and_tasks",
+      "breakpoints": true
     }
   ]
 }

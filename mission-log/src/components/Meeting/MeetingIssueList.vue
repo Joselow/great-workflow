@@ -2,12 +2,13 @@
 import { nextTick, useTemplateRef } from 'vue'
 
 import ColorPicker from '@/components/Project/ColorPicker.vue'
+import RichTextEditor from '@/components/RichTextEditor.vue'
 
 import { COLOR_ISSUE } from '@/constants/projectColors'
 import type { MeetingIssue } from '@/interfaces/meeting'
 
 const issues = defineModel<MeetingIssue[]>({ required: true })
-const nameInputs = useTemplateRef<HTMLInputElement[]>('nameInputs')
+const nameInputs = useTemplateRef<InstanceType<typeof RichTextEditor>[]>('nameInputs')
 
 
 const addItem = () => {
@@ -58,14 +59,13 @@ const moveItem = (index: number, direction: -1 | 1) => {
       class="flex items-center gap-2"
     >
       <span class="w-5 shrink-0 text-md text-gray-500">{{ index + 1 }}.</span>
-      <input
-        v-model="item.name"
-        type="text"
-        placeholder="Punto a tratar"
+      <RichTextEditor
         ref="nameInputs"
-        class="px-2 min-w-0 flex-1 rounded-md border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1 text-sm text-gray-800 dark:text-gray-100 outline-none"
-        @keydown.enter.prevent="addFromEnter(index)"
-
+        v-model="item.name"
+        class="min-w-0 flex-1"
+        placeholder="Punto a tratar"
+        :maxlength="255"
+        @enter="addFromEnter(index)"
       />
       <ColorPicker v-model="item.color" variant="button" size="small" />
       <button

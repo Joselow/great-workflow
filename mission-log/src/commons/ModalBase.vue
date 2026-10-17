@@ -9,6 +9,10 @@ const props = defineProps({
     closeable: {
         type: Boolean,
         default: true
+    },
+    centered: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -59,7 +63,7 @@ const maxWidthClass = computed(() => {
             <div
             v-show="show"
             class="text-gray-300 fixed inset-0 overflow-y-auto z-50"
-            :class="{ 'dont-close': tryCloseModal, 'py-6 px-4': maxWidth !== 'full' }"
+            :class="{ 'dont-close': tryCloseModal, 'py-6 px-4': !centered && maxWidth !== 'full' }"
             @animationend="endAnimation"
             >
             <!-- Fondo oscuro -->
@@ -79,6 +83,7 @@ const maxWidthClass = computed(() => {
             </Transition>
 
             <!-- Contenido del modal -->
+            <div :class="centered ? 'flex min-h-full items-center justify-center p-4' : undefined">
             <Transition
                 enter-active-class="ease-out duration-300"
                 enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -89,14 +94,15 @@ const maxWidthClass = computed(() => {
             >
                 <div
                 v-show="show"
-                class="relative z-50 mb-6 
+                class="relative z-50 mx-auto
                 bg-white/95
-                dark:bg-zinc-900 border-1 border-gray-900/10 dark:border-white/15 rounded-lg overflow-hidden shadow-lg transform transition-all mx-auto"
-                :class="maxWidthClass"
+                dark:bg-zinc-900 border-1 border-gray-900/10 dark:border-white/15 rounded-lg overflow-hidden shadow-lg transform transition-all"
+                :class="[maxWidthClass, centered ? 'w-full' : 'mb-6']"
                 >
                 <slot />
                 </div>
             </Transition>
+            </div>
             </div>
         </Transition>
     </Teleport>

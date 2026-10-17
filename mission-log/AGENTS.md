@@ -6,7 +6,14 @@ La arquitectura de carpetas todavía está en definición. `CLAUDE.md` describe 
 
 No asumas que lo descrito en `CLAUDE.md` ya está implementado — revisa `src/` antes de decidir dónde ubicar un archivo nuevo. Evita sobre-invertir en abstracciones de carpetas hasta que la arquitectura se estabilice.
 
-*UI*
+**UI**
 Estilo Pastel Soft UI / Soft Brutalism
 Mantén una interfaz limpia, plana, sin sombras pesadas
 Usa tarjetas con bordes suaves redondeados pequeños y delineado fino
+
+**Responsive UI**
+- Desktop es el layout principal.
+- Adaptar la interfaz a móviles con enfoque mobile-first.
+Info:
+- El writer global se muestra como panel lateral derecho en escritorio y como pestaña inferior en móviles.
+- Cerrado, el writer no debe alterar el ancho del contenido ni superponerse a la interfaz.

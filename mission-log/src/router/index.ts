@@ -65,6 +65,18 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/requirements',
+    name: 'requirements',
+    component: () => import('@/views/requirements/RequirementsView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/tasks',
+    name: 'tasks',
+    component: () => import('@/views/tasks/TasksView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/share-data/:id',
     name: 'publicCard',
     component: () => import('@/views/cards/CardPublicView.vue'),
