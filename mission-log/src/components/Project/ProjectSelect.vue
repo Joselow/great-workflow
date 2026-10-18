@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { Project } from '@/interfaces/project'
+import { projectStore } from '@/store/projectStore'
+import { useProject } from '@/composables/useProject'
 
 const model = defineModel<string | null>({ required: true })
 
-const props = defineProps<{
-  projects: Project[]
-}>()
+const props = withDefaults(defineProps<{
+  emptyValue?: string
+  emptyLabel?: string
+}>(), {
+  emptyValue: '',
+  emptyLabel: 'Ningún proyecto',
+})
 
-const selected = computed(() =>
-  props.projects.find((project) => project.id === model.value) ?? null
-)
+const { projects } = projectStore
+const { ensureProjects } = useProject()
+
+void ensureProjects()
+
+const selected = computed(() => {
+  if (!model.value || model.value === props.emptyValue) return null
+  return projects.value.find((project) => project.id === model.value) ?? null
+})
 
 const selectedColor = computed(() => selected.value?.color ?? '#a1a1aa')
 
 const selectValue = computed({
-  get: () => model.value ?? '',
+  get: () => model.value ?? props.emptyValue,
   set: (value: string) => {
-    model.value = value || null
+    model.value = value === props.emptyValue && props.emptyValue === ''
+      ? null
+      : value
   },
 })
 </script>
@@ -39,7 +52,7 @@ const selectValue = computed({
       v-model="selectValue"
       class="w-auto max-w-[10rem] cursor-pointer bg-transparent text-xs font-semibold outline-none text-gray-800 dark:text-gray-100 dark:[color-scheme:dark]"
     >
-      <option value="">Ningún proyecto</option>
+      <option :value="emptyValue">{{ emptyLabel }}</option>
       <option
         v-for="project in projects"
         :key="project.id"

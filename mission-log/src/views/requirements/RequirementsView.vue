@@ -167,7 +167,7 @@ const onDeleteTask = async (task: Task) => {
   <div class="min-w-0 max-w-full overflow-x-hidden">
     <CommonLoader v-if="loading || tasksLoading" />
 
-    <div class="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-4">
+    <div class="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-4">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Requerimientos</h2>
 
       <p v-if="!activeProject?.id" class="text-sm text-gray-500 dark:text-gray-400">

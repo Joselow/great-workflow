@@ -12,6 +12,7 @@ export interface Task {
 }
 
 export interface TaskDraft {
+  id?: string
   name: string
   description: string
   completed: boolean

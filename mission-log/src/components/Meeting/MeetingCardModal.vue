@@ -26,7 +26,7 @@ const emit = defineEmits<{
 const router = useRouter()
 
 
-const { activeProject, projects } = projectStore
+const { activeProject } = projectStore
 const { getCards, createCard, loading } = useCard()
 
 const mode = ref<'pick' | 'create'>('pick')
@@ -236,7 +236,6 @@ const showCard = (card: CardListItem) => {
       >
         <CardForm
           v-model="cardDraft"
-          :projects="projects"
           save-label="Crear card"
           @save="handleCreate"
         />

@@ -2,7 +2,7 @@
 import { nextTick, ref, watch } from 'vue'
 
 import ColorPicker from '@/components/Project/ColorPicker.vue'
-import CardProjectSelect from '@/components/Card/CardProjectSelect.vue'
+import ProjectSelect from '@/components/Project/ProjectSelect.vue'
 import CardSectionList from '@/components/Card/CardSectionList.vue'
 
 import { useTextareaFit } from '@/composables/useTextareaFit'
@@ -10,12 +10,10 @@ import { useTextareaFit } from '@/composables/useTextareaFit'
 import { cardSurfaceStyle, isLightHex } from '@/helpers/cardColor'
 
 import type { CardDraft } from '@/interfaces/card'
-import type { Project } from '@/interfaces/project'
 
 const draft = defineModel<CardDraft>({ required: true })
 
 defineProps<{
-  projects: Project[]
   saveLabel?: string
 }>()
 
@@ -53,7 +51,7 @@ watch(
 <template>
   <div>
     <div class="flex w-full items-center gap-2">
-      <CardProjectSelect v-model="draft.projectId" :projects="projects" />
+      <ProjectSelect v-model="draft.projectId" />
       <div class="flex w-auto shrink-0 items-center gap-2">
         <button
           type="button"

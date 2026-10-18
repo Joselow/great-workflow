@@ -16,6 +16,8 @@ const { projects, openDrawer, lastPersistedDraft, draftProject, activeProject } 
 
 const { setStoredActiveProject } = useProjectSelected()
 
+let projectsRequest: Promise<void> | null = null
+
 
 export function useProject() {
   const loading = ref(false)
@@ -89,18 +91,25 @@ export function useProject() {
     }
   }
 
+  const ensureProjects = () => {
+    if (projects.value.length) return Promise.resolve()
+
+    if (!projectsRequest) {
+      projectsRequest = getProjects()
+        .then(({ success, data }) => {
+          if (success && data) projects.value = data
+        })
+        .finally(() => {
+          projectsRequest = null
+        })
+    }
+
+    return projectsRequest
+  }
+
   const showProjectsDrawer = async (routePath: string) => {
     openDrawer(routePath)
-    
-    if (projects.value.length) {
-      return
-    }
-
-    const { success, data } = await getProjects()
-
-    if (success && data) {
-      projects.value = data
-    }
+    await ensureProjects()
   }
 
   const saveDraft = async (draft: PartialProject) => {
@@ -161,6 +170,7 @@ export function useProject() {
 
   return {
     loading,
+    ensureProjects,
     getProjects,
     getProjectById,
     createProject,

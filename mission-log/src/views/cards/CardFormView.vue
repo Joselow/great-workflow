@@ -8,7 +8,6 @@ import CardForm from '@/components/Card/CardForm.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 import { projectStore } from '@/store/projectStore'
-import { useProject } from '@/composables/useProject'
 import { useCard } from '@/composables/useCard'
 import { useCopyCardText } from '@/composables/useCopyCardText'
 import { useShowStates } from '@/composables/useShowStates'
@@ -21,8 +20,7 @@ import type { CardDraft, CardWritePayload } from '@/interfaces/card'
 const route = useRoute()
 const router = useRouter()
 
-const { activeProject, projects } = projectStore
-const { getProjects } = useProject()
+const { activeProject } = projectStore
 const { createCard, getCardById, updateCard, deleteCard, loading } = useCard()
 const { copied: textCopied, copyFromCard } = useCopyCardText()
 const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates('modalConfirm')
@@ -52,15 +50,6 @@ const toPayload = (current: CardDraft): CardWritePayload => ({
     : current.sections.filter((section) => section.title.trim()),
 })
 
-const loadProjects = async () => {
-  if (projects.value.length) return
-
-  const { success, data } = await getProjects()
-  if (success && data) {
-    projects.value = data
-  }
-}
-
 const startView = async () => {
   const id = route.params.id
 
@@ -88,7 +77,6 @@ const startView = async () => {
 }
 
 startView()
-loadProjects()
 
 const handleSaveClick = () => {
   if (!draft.value) return
@@ -230,7 +218,6 @@ const handleConfirmDelete = async (id: string) => {
 
     <CardForm
       v-model="draft"
-      :projects="projects"
       @save="handleSaveClick"
     />
 

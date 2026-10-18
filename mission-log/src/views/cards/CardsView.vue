@@ -5,8 +5,6 @@ import { useRouter } from 'vue-router'
 import CardListFilters from '@/components/Card/CardListFilters.vue'
 import CardTile from '@/components/Card/CardTile.vue'
 
-import { projectStore } from '@/store/projectStore'
-import { useProject } from '@/composables/useProject'
 import { useCard } from '@/composables/useCard'
 import { debounce } from '@/utils/debounce'
 
@@ -15,8 +13,6 @@ import type { CardListItem, CardListViewFilters } from '@/interfaces/card'
 const PAGE_SIZE = 9
 
 const router = useRouter()
-const { projects } = projectStore
-const { getProjects } = useProject()
 const { getCards, loading } = useCard()
 
 const filters = ref<CardListViewFilters>({
@@ -31,15 +27,6 @@ const items = ref<CardListItem[]>([])
 
 const canPrev = computed(() => page.value > 1)
 const canNext = computed(() => page.value * PAGE_SIZE < total.value)
-
-const loadProjects = async () => {
-  if (projects.value.length) return
-
-  const { success, data } = await getProjects()
-  if (success && data) {
-    projects.value = data
-  }
-}
 
 const loadCards = async () => {
   const { success, data } = await getCards({
@@ -109,7 +96,6 @@ const goNext = () => {
   void loadCards()
 }
 
-loadProjects()
 loadCards()
 </script>
 
@@ -139,7 +125,6 @@ cards_stack
     <CardListFilters
       v-model:q="filters.q"
       :filters="filters"
-      :projects="projects"
       @update="handleFiltersUpdate"
     />
 

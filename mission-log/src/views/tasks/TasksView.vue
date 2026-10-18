@@ -24,10 +24,10 @@ const completingIds = ref<string[]>([])
 const statusFilter = ref<StatusFilter>('all')
 const requirementFilter = ref<RequirementFilter>('all')
 
-const statusOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'Todas' },
-  { value: 'pending', label: 'Pendientes' },
-  { value: 'done', label: 'Hechas' },
+const statusOptions: { value: StatusFilter; label: string; icon: string }[] = [
+  { value: 'all', label: 'Todos', icon: 'list_alt' },
+  { value: 'pending', label: 'Pendientes', icon: 'radio_button_unchecked' },
+  { value: 'done', label: 'Completadas', icon: 'check_circle' },
 ]
 
 const taskFilters = (projectId: string): TaskListFilters => {
@@ -97,6 +97,7 @@ const setRequirement = (value: RequirementFilter) => {
 const onEdit = (task: Task) => {
   editingId.value = task.id
   draft.value = {
+    id: task.id,
     name: task.name,
     description: task.description,
     completed: task.completed,
@@ -155,17 +156,23 @@ const filterClass = (active: boolean) => active
 </script>
 
 <template>
-  <div class="min-w-0 max-w-full overflow-x-hidden">
+  <div class="min-w-0 max-w-6xl overflow-x-hidden m-auto">
     <CommonLoader v-if="loading || requirementsLoading" />
 
-    <div class="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-4">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Tareas</h2>
+    <div class="mx-auto flex w-full min-w-0 flex-col gap-4">
+      <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <span class="material-symbols-outlined align-middle">task</span>
+        Tareas
+      </h1>
 
       <p v-if="!activeProject?.id" class="text-sm text-gray-500 dark:text-gray-400">
         Selecciona un proyecto para ver las tareas.
       </p>
 
-      <template v-else>
+      <div
+        v-else
+        class="grid min-w-0 grid-cols-1 items-start gap-10 md:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]"
+      >
         <TaskForm
           v-model="draft"
           :requirements="requirements"
@@ -173,60 +180,66 @@ const filterClass = (active: boolean) => active
           @save="onSave"
         />
 
-        <div class="flex flex-col gap-2">
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="option in statusOptions"
-              :key="option.value"
-              type="button"
-              class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
-              :class="filterClass(statusFilter === option.value)"
-              @click="setStatus(option.value)"
-            >
-              {{ option.label }}
-            </button>
+        <div class="flex min-w-0 flex-col gap-3">
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="option in statusOptions"
+                :key="option.value"
+                type="button"
+                class="cursor-pointer rounded-lg border px-3 py-1 text-xs 
+                "
+                :class="filterClass(statusFilter === option.value)"
+                @click="setStatus(option.value)"
+              >
+                <span class="material-symbols-outlined align-middle"
+                  style="font-size: 14px;"
+                >{{ option.icon }}</span>
+                {{ option.label }}
+              </button>
+            </div>
+
+            <!-- <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
+                :class="filterClass(requirementFilter === 'all')"
+                @click="setRequirement('all')"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
+                :class="filterClass(requirementFilter === 'none')"
+                @click="setRequirement('none')"
+              >
+                Sin requerimiento
+              </button>
+              <button
+                v-for="requirement in requirements"
+                :key="requirement.id"
+                type="button"
+                class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
+                :class="filterClass(requirementFilter === requirement.id)"
+                @click="setRequirement(requirement.id)"
+              >
+                {{ requirement.name }}
+              </button>
+            </div> -->
           </div>
 
-          <div class="flex flex-wrap gap-2">
-            <button
-              type="button"
-              class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
-              :class="filterClass(requirementFilter === 'all')"
-              @click="setRequirement('all')"
-            >
-              Todos
-            </button>
-            <button
-              type="button"
-              class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
-              :class="filterClass(requirementFilter === 'none')"
-              @click="setRequirement('none')"
-            >
-              Sin requerimiento
-            </button>
-            <button
-              v-for="requirement in requirements"
-              :key="requirement.id"
-              type="button"
-              class="cursor-pointer rounded-lg border px-3 py-1 text-xs font-semibold"
-              :class="filterClass(requirementFilter === requirement.id)"
-              @click="setRequirement(requirement.id)"
-            >
-              {{ requirement.name }}
-            </button>
-          </div>
+          <TaskList
+            :tasks="tasks"
+            :completing-ids="completingIds"
+            :pending="loading"
+            empty-message="Aún no hay tareas"
+            @complete="onComplete"
+            @edit="onEdit"
+            @delete="onDelete"
+          />
         </div>
-
-        <TaskList
-          :tasks="tasks"
-          :completing-ids="completingIds"
-          :pending="loading"
-          empty-message="Aún no hay tareas"
-          @complete="onComplete"
-          @edit="onEdit"
-          @delete="onDelete"
-        />
-      </template>
+      </div>
     </div>
   </div>
 </template>

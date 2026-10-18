@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import ProjectSelect from '@/components/Project/ProjectSelect.vue'
 
 import type { CardListProjectFilter, CardListViewFilters } from '@/interfaces/card'
-import type { Project } from '@/interfaces/project'
 
 const props = defineProps<{
   filters: CardListViewFilters
-  projects: Project[]
 }>()
 
 const q = defineModel<string>('q', { required: true })
@@ -19,49 +17,19 @@ const patch = (partial: Partial<CardListViewFilters>) => {
   emit('update', { ...props.filters, ...partial })
 }
 
-const selectedProject = computed(() =>
-  props.filters.projectFilter !== 'all' && props.filters.projectFilter !== 'null'
-    ? props.projects.find((project) => project.id === props.filters.projectFilter) ?? null
-    : null
-)
-
-const selectedColor = computed(() => selectedProject.value?.color ?? '#a1a1aa')
-
-const onProjectChange = (event: Event) => {
-  patch({ projectFilter: (event.target as HTMLSelectElement).value as CardListProjectFilter })
+const onProjectChange = (value: string | null) => {
+  patch({ projectFilter: (value ?? 'all') as CardListProjectFilter })
 }
 </script>
 
 <template>
   <div class="flex flex-wrap items-center gap-3">
-    <label
-      class="inline-flex items-center gap-2 max-w-full rounded-lg border px-3 py-1 text-xs font-semibold
-        dark:text-gray-100
-      "
-      :style="{
-        backgroundColor: `${selectedColor}33`,
-        borderColor: `${selectedColor}99`,
-      }"
-    >
-      <span
-        class="h-2.5 w-2.5 shrink-0 rounded-full"
-        :style="{ backgroundColor: selectedColor }"
-      />
-      <select
-        :value="filters.projectFilter"
-        class="min-w-0 max-w-[12rem] cursor-pointer bg-transparent text-xs font-semibold outline-none dark:text-gray-100"
-        @change="onProjectChange"
-      >
-        <option value="all">Todos</option>
-        <option
-          v-for="project in projects"
-          :key="project.id"
-          :value="project.id"
-        >
-          {{ project.name }}
-        </option>
-      </select>
-    </label>
+    <ProjectSelect
+      :model-value="filters.projectFilter"
+      empty-value="all"
+      empty-label="Todos"
+      @update:model-value="onProjectChange"
+    />
 
     <input
       v-model="q"

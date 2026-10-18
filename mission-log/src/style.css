@@ -2,7 +2,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-brand-cyan: #00C2CB;
+  /* --color-brand-cyan: #00C2CB; */
+  --color-brand-cyan: #ff8357;
   --color-brand-mint: #7FE0D4;
   --color-brand-yellow: #FFE38A;
   --color-brand-orange: #FF9A76;

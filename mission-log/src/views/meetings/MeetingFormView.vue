@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import DangerZone from '@/commons/DangerZone.vue'
-import CardProjectSelect from '@/components/Card/CardProjectSelect.vue'
+import ProjectSelect from '@/components/Project/ProjectSelect.vue'
 import MeetingIssueList from '@/components/Meeting/MeetingIssueList.vue'
 import MeetingNextStepList from '@/components/Meeting/MeetingNextStepList.vue'
 import MeetingCardPanel from '@/components/Meeting/MeetingCardPanel.vue'
@@ -37,7 +37,7 @@ const route = useRoute()
 const router = useRouter()
 
 const { activeProject, projects } = projectStore
-const { getProjects } = useProject()
+const { ensureProjects } = useProject()
 const { createMeeting, getMeetingById, updateMeeting, qualifyMeeting, deleteMeeting, loading } = useMeeting()
 const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates('modalConfirm')
 
@@ -118,15 +118,6 @@ const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
   objectiveAchieved: current.objectiveAchieved,
 })
 
-const loadProjects = async () => {
-  if (projects.value.length) return
-
-  const { success, data } = await getProjects()
-  if (success && data) {
-    projects.value = data
-  }
-}
-
 const startView = async () => {
   const id = route.params.id
 
@@ -166,7 +157,7 @@ const startView = async () => {
 }
 
 startView()
-loadProjects()
+void ensureProjects()
 
 const handleSaveClick = () => {
   if (!draft.value) return
@@ -371,7 +362,7 @@ const handleConfirmDelete = async (id: string) => {
             {{ draft.id ? 'edit' : 'add_circle' }}
           </span>
         </h2>
-        <CardProjectSelect v-model="draft.projectId" :projects="projects" />
+        <ProjectSelect v-model="draft.projectId" />
       </div>
       <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm font-semibold">
         <div v-if="draft.executed === true"
