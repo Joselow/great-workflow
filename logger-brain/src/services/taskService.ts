@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { tasks, type NewTask } from "../db/schemas/tasks.js";
@@ -89,7 +89,7 @@ export async function listTasks(userId: number, filters: TaskListFilters) {
                 : undefined,
             filters.completed !== undefined ? eq(tasks.completed, filters.completed) : undefined,
         ))
-        .orderBy(desc(tasks.createdAt));
+        .orderBy(asc(tasks.createdAt));
 }
 
 export async function createTask(userId: number, input: TaskCreateInput) {

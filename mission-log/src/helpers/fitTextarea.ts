@@ -1,5 +1,6 @@
 export function fitTextarea(el: EventTarget | null) {
   if (!(el instanceof HTMLTextAreaElement)) return
+  if (el.scrollHeight <= el.clientHeight) return
 
   el.style.height = 'auto'
   el.style.height = `${el.scrollHeight}px`

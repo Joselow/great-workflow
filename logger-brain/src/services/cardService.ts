@@ -6,6 +6,7 @@ import { projects } from "../db/schemas/projects.js";
 import { getProjectById } from "./projectService.js";
 import { BadRequestError400 } from "../errors/BadRequestError400.js";
 import { NotFoundError404 } from "../errors/NotFoundError404.js";
+import { clearActionTemplateCardLinks } from "./actionTemplateService.js";
 
 interface CardWriteInput {
     name?: string;
@@ -128,24 +129,38 @@ export async function updateCard(id: string, userId: number, changes: CardWriteI
     if (changes.projectId !== undefined) payload.projectId = changes.projectId;
     if (changes.flMeeting !== undefined) payload.flMeeting = changes.flMeeting;
 
-    const [card] = await db.update(cards)
-        .set(payload)
-        .where(and(eq(cards.id, id), eq(cards.userId, userId)))
-        .returning();
+    return db.transaction(async (tx) => {
+        const [card] = await tx.update(cards)
+            .set(payload)
+            .where(and(eq(cards.id, id), eq(cards.userId, userId)))
+            .returning();
 
-    return card;
+        if (!card) {
+            throw new NotFoundError404('Card not found');
+        }
+
+        if (existing.isPrompt && !nextIsPrompt) {
+            await clearActionTemplateCardLinks(id, userId, tx);
+        }
+
+        return card;
+    });
 }
 
 export async function deleteCard(id: string, userId: number) {
-    const [card] = await db.delete(cards)
-        .where(and(eq(cards.id, id), eq(cards.userId, userId)))
-        .returning();
+    return db.transaction(async (tx) => {
+        const [card] = await tx.delete(cards)
+            .where(and(eq(cards.id, id), eq(cards.userId, userId)))
+            .returning();
 
-    if (!card) {
-        throw new NotFoundError404('Card not found');
-    }
+        if (!card) {
+            throw new NotFoundError404('Card not found');
+        }
 
-    return card;
+        await clearActionTemplateCardLinks(id, userId, tx);
+
+        return card;
+    });
 }
 
 export async function getPublicCard(id: string) {

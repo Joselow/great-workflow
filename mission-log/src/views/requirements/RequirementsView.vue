@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 import CommonLoader from '@/commons/CommonLoader.vue'
 import RequirementForm from '@/components/Requirement/RequirementForm.vue'
 import RequirementList from '@/components/Requirement/RequirementList.vue'
-import TaskForm from '@/components/Task/TaskForm.vue'
-import TaskList from '@/components/Task/TaskList.vue'
+import RequirementTasksModal from '@/components/Requirement/RequirementTasksModal.vue'
 
 import { useRequirement } from '@/composables/useRequirement'
-import { useTask } from '@/composables/useTask'
 import { projectStore } from '@/store/projectStore'
 
 import type { Requirement, RequirementDraft } from '@/interfaces/requirement'
-import { emptyTaskDraft, type Task, type TaskDraft } from '@/interfaces/task'
 
 const { activeProject } = projectStore
 const {
@@ -23,42 +20,22 @@ const {
   updateRequirement,
   deleteRequirement,
 } = useRequirement()
-const {
-  loading: tasksLoading,
-  tasks,
-  getTasks,
-  createTask,
-  updateTask,
-  patchCompleted,
-  deleteTask,
-} = useTask()
 
 const draft = ref<RequirementDraft>({ name: '' })
 const selectedId = ref<string | null>(null)
-const taskDraft = ref<TaskDraft>(emptyTaskDraft())
-const editingTaskId = ref<string | null>(null)
-const completingIds = ref<string[]>([])
-
-const selected = computed(() =>
-  requirements.value.find((requirement) => requirement.id === selectedId.value) ?? null,
-)
-
-const resetTaskDraft = (requirementId: string | null) => {
-  editingTaskId.value = null
-  taskDraft.value = emptyTaskDraft(requirementId)
-}
+const taskRequirement = ref<Requirement | null>(null)
+const tasksOpen = ref(false)
 
 watch(
   () => activeProject.value?.id,
   (projectId) => {
     draft.value = { name: '' }
     selectedId.value = null
-    resetTaskDraft(null)
-    completingIds.value = []
+    tasksOpen.value = false
+    taskRequirement.value = null
 
     if (!projectId) {
       requirements.value = []
-      tasks.value = []
       return
     }
 
@@ -69,11 +46,17 @@ watch(
 
 const onSelect = (requirement: Requirement) => {
   selectedId.value = requirement.id
-  draft.value = { name: requirement.name }
-  resetTaskDraft(requirement.id)
-  const projectId = activeProject.value?.id
-  if (!projectId) return
-  void getTasks({ projectId, requirementId: requirement.id })
+  draft.value = { id: requirement.id, name: requirement.name }
+}
+
+const onOpenTasks = (requirement: Requirement) => {
+  taskRequirement.value = requirement
+  tasksOpen.value = true
+}
+
+const onTasksOpen = (isOpen: boolean) => {
+  tasksOpen.value = isOpen
+  if (!isOpen) taskRequirement.value = null
 }
 
 const onSaveRequirement = async () => {
@@ -85,6 +68,9 @@ const onSaveRequirement = async () => {
     const result = await updateRequirement(selectedId.value, draft.value.name)
     if (!result.success || !result.data) return
     draft.value = { name: result.data.name }
+    if (taskRequirement.value?.id === selectedId.value) {
+      taskRequirement.value = result.data
+    }
   } else {
     const result = await createRequirement({
       name: draft.value.name,
@@ -104,68 +90,21 @@ const onDeleteRequirement = async (requirement: Requirement) => {
   if (selectedId.value === requirement.id) {
     selectedId.value = null
     draft.value = { name: '' }
-    resetTaskDraft(null)
-    tasks.value = []
+  }
+
+  if (taskRequirement.value?.id === requirement.id) {
+    tasksOpen.value = false
+    taskRequirement.value = null
   }
 
   const projectId = activeProject.value?.id
   if (projectId) await getRequirements(projectId)
 }
-
-const onSaveTask = async () => {
-  const requirement = selected.value
-  const projectId = activeProject.value?.id
-  if (!requirement || !projectId || tasksLoading.value) return
-  if (!taskDraft.value.name.trim()) return
-
-  taskDraft.value.requirementId = requirement.id
-
-  const result = editingTaskId.value
-    ? await updateTask(editingTaskId.value, taskDraft.value)
-    : await createTask(taskDraft.value)
-
-  if (!result.success) return
-
-  resetTaskDraft(requirement.id)
-  await getTasks({ projectId, requirementId: requirement.id })
-}
-
-const onEditTask = (task: Task) => {
-  editingTaskId.value = task.id
-  taskDraft.value = {
-    name: task.name,
-    description: task.description,
-    completed: task.completed,
-    requirementId: selected.value?.id ?? task.requirementId,
-  }
-}
-
-const onCompleteTask = async (task: Task) => {
-  if (completingIds.value.includes(task.id)) return
-
-  completingIds.value = [...completingIds.value, task.id]
-  const result = await patchCompleted(task.id, !task.completed)
-  completingIds.value = completingIds.value.filter((id) => id !== task.id)
-
-  if (!result.success || !result.data) return
-  const updated = result.data
-  tasks.value = tasks.value.map((item) => item.id === task.id ? updated : item)
-}
-
-const onDeleteTask = async (task: Task) => {
-  const requirement = selected.value
-  const projectId = activeProject.value?.id
-  const result = await deleteTask(task.id)
-  if (!result.success || !requirement || !projectId) return
-
-  if (editingTaskId.value === task.id) resetTaskDraft(requirement.id)
-  await getTasks({ projectId, requirementId: requirement.id })
-}
 </script>
 
 <template>
   <div class="min-w-0 max-w-full overflow-x-hidden">
-    <CommonLoader v-if="loading || tasksLoading" />
+    <CommonLoader v-if="loading" />
 
     <div class="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-4">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Requerimientos</h2>
@@ -187,35 +126,16 @@ const onDeleteTask = async (task: Task) => {
           :pending="loading"
           empty-message="Aún no hay requerimientos"
           @select="onSelect"
+          @tasks="onOpenTasks"
           @delete="onDeleteRequirement"
         />
 
-        <div
-          v-if="selected"
-          class="flex flex-col gap-3 rounded-xl border border-black/10 p-3 dark:border-white/15"
-        >
-          <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            Tareas de {{ selected.name }}
-          </h3>
-
-          <TaskForm
-            v-model="taskDraft"
-            locked
-            :requirements="[]"
-            :saving="tasksLoading"
-            @save="onSaveTask"
-          />
-
-          <TaskList
-            :tasks="tasks"
-            :completing-ids="completingIds"
-            :pending="tasksLoading"
-            empty-message="Aún no hay tareas"
-            @complete="onCompleteTask"
-            @edit="onEditTask"
-            @delete="onDeleteTask"
-          />
-        </div>
+        <RequirementTasksModal
+          :model-value="tasksOpen"
+          :requirement="taskRequirement"
+          :project-id="activeProject.id"
+          @update:model-value="onTasksOpen"
+        />
       </template>
     </div>
   </div>

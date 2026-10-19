@@ -9,6 +9,7 @@ export interface Requirement {
 }
 
 export interface RequirementDraft {
+  id?: string
   name: string
 }
 

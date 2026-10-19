@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { requirements, type NewRequirement } from "../db/schemas/requirements.js";
@@ -59,7 +59,7 @@ export async function listRequirements(userId: number, filters: RequirementListF
             eq(requirements.projectId, filters.projectId),
             filters.meetingId ? eq(requirements.meetingId, filters.meetingId) : undefined,
         ))
-        .orderBy(desc(requirements.createdAt));
+        .orderBy(asc(requirements.createdAt));
 }
 
 export async function createRequirement(userId: number, input: RequirementCreateInput) {
@@ -124,9 +124,18 @@ export async function deleteRequirement(id: string, userId: number) {
     const existing = await getRequirementByIdForUser(id, userId);
 
     await db.transaction(async (tx) => {
-        await tx.update(tasks)
-            .set({ requirementId: null })
-            .where(and(eq(tasks.userId, userId), eq(tasks.requirementId, existing.id)));
+        const [linkedTask] = await tx
+            .select({ id: tasks.id })
+            .from(tasks)
+            .where(and(eq(tasks.userId, userId), eq(tasks.requirementId, existing.id)))
+            .limit(1);
+
+        if (linkedTask) {
+            throw new BadRequestError400(
+                "No se puede eliminar el requerimiento porque tiene tareas asociadas <br>" +
+                "Primero debe eliminar las tareas asociadas.",
+            );
+        }
 
         await tx.delete(requirements)
             .where(and(eq(requirements.id, existing.id), eq(requirements.userId, userId)));

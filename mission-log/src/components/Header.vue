@@ -21,6 +21,7 @@ const sectionLinks = [
   { label: 'Requerimientos', name: 'requirements' },
   { label: 'Tareas', name: 'tasks' },
   { label: 'Cards', name: 'cards' },
+  { label: 'Acciones', name: 'actionTemplates' },
 ] as const
 
 const isCurrentSection = (label: string) => {
@@ -29,6 +30,7 @@ const isCurrentSection = (label: string) => {
   if (label === 'Cards') return route.path.startsWith('/cards')
   if (label === 'Requerimientos') return route.name === 'requirements'
   if (label === 'Tareas') return route.name === 'tasks'
+  if (label === 'Acciones') return route.name === 'actionTemplates'
   return false
 }
 

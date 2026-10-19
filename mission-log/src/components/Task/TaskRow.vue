@@ -28,7 +28,6 @@ const handleViewDescription = ( task: Task ) => {
   } else {
     textDataStore.setTextData('', 'markdown')
   }
-  showDescription.value = !showDescription.value
 }
 
 </script>

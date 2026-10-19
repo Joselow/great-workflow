@@ -28,7 +28,7 @@ const { showProjectsDrawer } = useProject()
 const helpOpen = ref(false)
 
 const openHelp = () => {
-  helpOpen.value = true
+  helpOpen.value = true  
 }
 
 const closeHelp = () => {
@@ -53,6 +53,17 @@ const isHelpShortcut = (event: KeyboardEvent) =>
 
 const commands: KeyboardCommand[] = [
   {
+    id: 'go-logs',
+    group: 'navigate',
+    label: 'Ir a Logs',
+    icon: 'edit_note',
+    keys: ['Mayús', 'L'],
+    match: (event) => isShiftLetter(event, 'l'),
+    run: () => {
+      router.push({ name: 'logger' })
+    },
+  },
+  {
     id: 'go-cards',
     group: 'navigate',
     label: 'Ir a Cards',
@@ -66,7 +77,7 @@ const commands: KeyboardCommand[] = [
   {
     id: 'go-meetings',
     group: 'navigate',
-    label: 'Ir a Meetings',
+    label: 'Ir a Meetings / Reuniones',
     icon: 'co_present',
     keys: ['Mayús', 'M'],
     match: (event) => isShiftLetter(event, 'm'),
@@ -74,17 +85,7 @@ const commands: KeyboardCommand[] = [
       router.push({ name: 'meetings' })
     },
   },
-  {
-    id: 'go-logs',
-    group: 'navigate',
-    label: 'Ir a Logs',
-    icon: 'edit_note',
-    keys: ['Mayús', 'L'],
-    match: (event) => isShiftLetter(event, 'l'),
-    run: () => {
-      router.push({ name: 'logger' })
-    },
-  },
+  
   {
     id: 'toggle-projects',
     group: 'panels',

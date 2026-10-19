@@ -44,8 +44,8 @@ const confirmDelete = () => {
 
 <template>
   <div class="min-w-0">
-    <div class="overflow-x-auto rounded-xl border border-black/10 dark:border-white/15">
-      <table class="w-full border-collapse text-left text-sm">
+    <div class="overflow-x-auto rounded-xl border border-black/10 dark:border-white/15 max-h-[400px]  pretty-scroll">
+      <table class="w-full border-collapse text-left text-sm ">
         <thead>
           <tr class="border-b border-black/10 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:border-white/10 dark:text-gray-400">
             <th class="px-3 py-2 font-semibold">Tarea</th>

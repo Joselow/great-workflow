@@ -77,6 +77,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/action-templates',
+    name: 'actionTemplates',
+    component: () => import('@/views/actionTemplates/ActionTemplatesView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/share-data/:id',
     name: 'publicCard',
     component: () => import('@/views/cards/CardPublicView.vue'),

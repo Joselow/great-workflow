@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 
 const emit = defineEmits<{
   select: [requirement: Requirement]
+  tasks: [requirement: Requirement]
   delete: [requirement: Requirement]
 }>()
 
@@ -46,7 +47,7 @@ const confirmDelete = () => {
     <article
       v-for="requirement in requirements"
       :key="requirement.id"
-      class="rounded-xl border px-3 py-3"
+      class="rounded-xl border px-3 py-2"
       :class="selectedId === requirement.id
         ? 'border-brand-orange'
         : 'border-black/10 dark:border-white/15'"
@@ -55,19 +56,48 @@ const confirmDelete = () => {
         <button
           type="button"
           class="min-w-0 flex-1 cursor-pointer break-words text-left font-semibold text-gray-900 dark:text-white"
-          @click="emit('select', requirement)"
+      
         >
           {{ requirement.name }}
         </button>
 
         <button
           type="button"
-          class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-rose-500/40 px-2 py-1 text-rose-600 dark:text-rose-300"
+          class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-cyan-500/40 
+          bg-cyan-400 dark:bg-cyan-800/50 hover:bg-cyan-500 dark:hover:bg-cyan-700/50
+          px-2 py-0 text-white"
+          title="Ver tareas"
+          aria-label="Ver tareas"
+          @click="emit('tasks', requirement)"
+        >
+          <span class="material-symbols-outlined"
+            style="font-size: 18px;"
+          >task_alt</span>
+          Tareas
+        </button>
+
+        <button
+          type="button"
+          class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-black/10 px-2 py-1 text-gray-600 dark:border-white/15 dark:text-gray-200"
+          title="Editar"
+          aria-label="Editar"
+              @click="emit('select', requirement)"
+        >
+          <span class="material-symbols-outlined"
+            style="font-size: 18px;"
+          >edit</span>
+        </button>
+        <button
+          type="button"
+          class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-rose-500/40 
+          px-2 py-1 text-rose-600 dark:text-rose-300"
           title="Eliminar"
           aria-label="Eliminar"
           @click="askDelete(requirement)"
         >
-          <span class="material-symbols-outlined text-[18px]">delete</span>
+          <span class="material-symbols-outlined"
+            style="font-size: 18px;"
+          >delete</span>
         </button>
       </div>
     </article>

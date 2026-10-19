@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   save: []
+  cancel: []
 }>()
 
 const requirementValue = computed({
@@ -36,8 +37,13 @@ const cleanForm = () => {
     name: '',
     description: '',
     completed: false,
-    requirementId: null,
+    requirementId: props.locked ? draft.value.requirementId : null,
   }
+}
+
+const onCancel = () => {
+  cleanForm()
+  emit('cancel')
 }
 </script>
 
@@ -57,7 +63,7 @@ const cleanForm = () => {
           v-if="draft.id"
           title="Cancelar"
           aria-label="Cancelar"
-          type="submit"
+          type="button"
           class="cursor-pointer rounded-lg 
             border border-red-300
             text-red-500
@@ -66,7 +72,7 @@ const cleanForm = () => {
              hover:bg-red-500/20
           text-xs font-semibold  disabled:cursor-not-allowed 
           disabled:opacity-60"
-          @click="cleanForm"
+          @click="onCancel"
         >
           Cancelar
         </button>
@@ -115,9 +121,9 @@ const cleanForm = () => {
           v-if="draft.id"
           title="Cancelar"
           aria-label="Cancelar"
-          type="submit"
+          type="button"
           class="cursor-pointer rounded-lg bg-red-500/85 px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          @click="cleanForm"
+          @click="onCancel"
         >
           <span class="material-symbols-outlined align-middle">cancel</span>
           Cancelar
