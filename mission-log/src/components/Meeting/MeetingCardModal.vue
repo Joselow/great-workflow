@@ -19,6 +19,12 @@ import type { CardDraft, CardListItem, CardWritePayload } from '@/interfaces/car
 
 const open = defineModel<boolean>({ required: true })
 
+const props = withDefaults(defineProps<{
+  promptsOnly?: boolean
+}>(), {
+  promptsOnly: false,
+})
+
 const emit = defineEmits<{
   pick: [card: CardListItem]
 }>()
@@ -39,16 +45,17 @@ function emptyCardDraft(): CardDraft {
     name: '',
     description: '',
     color: DEFAULT_PROJECT_COLOR,
-    isPrompt: false,
-    flMeeting: true,
+    isPrompt: props.promptsOnly,
+    flMeeting: !props.promptsOnly,
     projectId: activeProject.value?.id ?? null,
-    sections: [{ title: '', description: '' }],
+    sections: props.promptsOnly ? [] : [{ title: '', description: '' }],
   }
 }
 
 const loadCards = async () => {
   const { success, data } = await getCards({
     q: q.value.trim() || undefined,
+    isPrompt: props.promptsOnly ? true : undefined,
     page: 1,
     limit: 12,
   })
@@ -80,17 +87,21 @@ const pick = (card: CardListItem) => {
   // open.value = false
 }
 
-const toPayload = (current: CardDraft): CardWritePayload => ({
-  name: current.name.trim(),
-  description: current.description,
-  color: current.color,
-  isPrompt: current.isPrompt,
-  flMeeting: current.flMeeting,
-  projectId: current.projectId,
-  sections: current.isPrompt
-    ? []
-    : current.sections.filter((section) => section.title.trim()),
-})
+const toPayload = (current: CardDraft): CardWritePayload => {
+  const isPrompt = props.promptsOnly ? true : current.isPrompt
+
+  return {
+    name: current.name.trim(),
+    description: current.description,
+    color: current.color,
+    isPrompt,
+    flMeeting: current.flMeeting,
+    projectId: current.projectId,
+    sections: isPrompt
+      ? []
+      : current.sections.filter((section) => section.title.trim()),
+  }
+}
 
 const handleCreate = async () => {
   if (!cardDraft.value.name.trim()) {
@@ -127,7 +138,7 @@ const showCard = (card: CardListItem) => {
     <div class="p-4 md:p-5">
       <div class="mb-4 flex items-center justify-between gap-2">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          <span class="material-symbols-outlined align-middle ">cards_stack</span>
+          <span class="material-symbols-outlined align-middle">cards_stack</span>
           Asociar Card
         </h3>
         <div class="flex gap-1">
@@ -137,35 +148,35 @@ const showCard = (card: CardListItem) => {
             title="Cerrar"
             @click="open = false"
             >
-            <span class="material-symbols-outlined" style="font-size: 1.1rem;">close</span>
+            <span class="material-symbols-outlined">close</span>
           </button>
         
         </div>
       </div>
 
-      <div class="flex gap-2 justify-end py-4">
+      <div class="mb-4 flex justify-end gap-2">
         <button
-            type="button"
-            class="px-6 cursor-pointer rounded-md border py-1 text-xs font-semibold"
-            :class="mode === 'pick'
-              ? 'border-gray-900 bg-gray-900 text-white dark:border-white/40 dark:bg-white/20'
-              : 'border-black/10 bg-black/5 text-black dark:border-white/15 dark:text-white'"
-            @click="openPicker"
-          >
-          <span class="material-symbols-outlined align-middle">credit_card_heart</span>
-            Existente
-          </button>
-          <button
-            type="button"
-            class="px-6 cursor-pointer rounded-md border py-1 text-xs font-semibold"
-            :class="mode === 'create'
-              ? 'border-gray-900 bg-gray-900 text-white dark:border-white/40 dark:bg-white/20'
-              : 'border-black/60 bg-black/5 text-black dark:border-white/15 dark:text-white'"
-            @click="mode = 'create'"
-          >
-          <span class="material-symbols-outlined align-middle">add_card</span>
-            Nueva
-          </button>
+          type="button"
+          class="inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold"
+          :class="mode === 'pick'
+            ? 'border-gray-900 bg-gray-900 text-white dark:border-white/30 dark:bg-white/15'
+            : 'border-black/10 bg-white text-gray-700 hover:bg-black/5 dark:border-white/15 dark:bg-white/5 dark:text-gray-200'"
+          @click="openPicker"
+        >
+          <span class="material-symbols-outlined leading-none">credit_card_heart</span>
+          Existente
+        </button>
+        <button
+          type="button"
+          class="inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold"
+          :class="mode === 'create'
+            ? 'border-gray-900 bg-gray-900 text-white dark:border-white/30 dark:bg-white/15'
+            : 'border-black/10 bg-white text-gray-700 hover:bg-black/5 dark:border-white/15 dark:bg-white/5 dark:text-gray-200'"
+          @click="mode = 'create'"
+        >
+          <span class="material-symbols-outlined leading-none">add_card</span>
+          Nueva
+        </button>
       </div>
 
       <div v-if="mode === 'pick'" class="space-y-3">
@@ -198,32 +209,38 @@ const showCard = (card: CardListItem) => {
           >
             <button
               type="button"
-              class="flex w-full cursor-pointer items-center justify-between gap-2 
-              rounded-lg border border-2 dark:border-white/10 px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5"
-              :style="{ borderColor: (card.color) }"
+              class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border px-3 py-1 text-left hover:brightness-95 dark:hover:brightness-110"
+              :style="{ borderColor: card.color, backgroundColor: card.color + '22' }"
               @dblclick="showCard(card)"
-            > 
+            >
               <div class="flex min-w-0 flex-1 items-center">
                 <span
-                  class="mr-2 h-3 w-3 shrink-0 rounded-full inline-block"
+                  class="mr-2 inline-block h-3 w-3 shrink-0 rounded-full"
                   :style="{ backgroundColor: card.color }"
                 />
                 <span class="truncate text-sm text-gray-800 dark:text-gray-100">{{ card.name }}</span>
               </div>
-              <div class="flex items-center justify-end gap-2">
-                <span 
-                  title="Ver card (dblclick card)"
-                  class="material-symbols-outlined align-middle hover:text-indigo-500"
-                  @click.stop="showCard(card)"
-                  >multimodal_hand_eye</span>
-
-                <span 
-                  title="Agregar card (click card)"
-                  class="material-symbols-outlined align-middle
-                    hover:text-blue-500
+              <div class="flex items-center justify-end gap-1">
+                <span
+                  title="Ver card(dblclick card)"
+                  class="inline-flex items-center justify-center rounded-md text-gray-500 
+                  hover:bg-black/10 hover:text-indigo-500
+                    px-2  py-1
                   "
+                  @click.stop="showCard(card)"
+                >
+                  <span class="material-symbols-outlined leading-none" >visibility</span>
+                </span>
+                <span
+                  title="Asociar card(click card)"
+                  class="
+                                      px-1  py-1
+
+                  inline-flex items-center justify-center rounded-md text-gray-500 hover:bg-black/10 hover:text-sky-600"
                   @click.stop="pick(card)"
-                  >add</span>
+                >
+                  <span class="material-symbols-outlined leading-none" >add_link</span>
+                </span>
               </div>
             </button>
           </li>

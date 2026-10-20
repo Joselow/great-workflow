@@ -10,9 +10,11 @@ const model = defineModel<string>({ required: true })
 withDefaults(defineProps<{
   variant?: 'panel' | 'button'
   size?: 'small' | 'medium'
+  placement?: 'right' | 'left' | 'bottom'
 }>(), {
   variant: 'panel',
   size: 'medium',
+  placement: 'left',
 })
 
 const stripHash = (value: string) => value.replace(/^#/, '').slice(0, 6)
@@ -149,7 +151,7 @@ const togglePicker = async () => {
   <PopoverBase
     v-else
     v-model="hexOpen"
-    placement="left"
+    :placement="placement"
   >
     <template #trigger>
       <button

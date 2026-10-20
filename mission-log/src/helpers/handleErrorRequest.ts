@@ -14,11 +14,11 @@ const actions = {
   403: (msg: string = '') => {
     errorToast(msg || 'Acceso denegado', null)
   },
-  404: (msg: string = '') => {
-    errorToast(msg || 'No encontrado', null)
+  404: (_msg: string = '') => {
+    errorToast('No encontrado', null)
   },
-  500: (msg: string = '') => {
-    errorToast(msg || 'Error interno del servidor', null)
+  500: (_msg: string = '') => {
+    errorToast('Error interno del servidor', null)
   },
   400: (msg: string = '') => {
     errorToast(msg || 'Ocurrió un error', null)

@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import ConfirmModal from '@/commons/ConfirmModal.vue'
 import MeetingCardModal from '@/components/Meeting/MeetingCardModal.vue'
+
 import { cardTileStyle } from '@/helpers/cardColor'
 
 import type { CardListItem } from '@/interfaces/card'
 
 const cards = defineModel<CardListItem[]>({ required: true })
 const modalOpen = ref(false)
+const confirmOpen = ref(false)
+const pendingCardId = ref<string | null>(null)
 
 const addCard = (card: CardListItem) => {
   if (cards.value.some((item) => item.id === card.id)) return
   cards.value = [...cards.value, card]
 }
 
-const removeCard = (id: string) => {
+const askRemove = (id: string) => {
+  pendingCardId.value = id
+  confirmOpen.value = true
+}
+
+const confirmRemove = () => {
+  const id = pendingCardId.value
+  confirmOpen.value = false
+  pendingCardId.value = null
+  if (!id) return
   cards.value = cards.value.filter((card) => card.id !== id)
 }
 </script>
@@ -55,11 +68,13 @@ const removeCard = (id: string) => {
           style="font-size: 1.2rem;">credit_score</span>
           {{ card.name || 'Sin título' }}
         </p>
+
+        
         <button
           type="button"
           class="cursor-pointer text-gray-400 hover:text-rose-500"
           title="Quitar de la reunión"
-          @click="removeCard(card.id)"
+          @click="askRemove(card.id)"
         >
           <span class="material-symbols-outlined" style="font-size: 1rem;">close</span>
         </button>
@@ -67,5 +82,15 @@ const removeCard = (id: string) => {
     </ul>
 
     <MeetingCardModal v-model="modalOpen" @pick="addCard" />
+
+    <ConfirmModal
+      v-model="confirmOpen"
+      title="¿Quitar esta card?"
+      @confirm="confirmRemove"
+    >
+      <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+        Se desvincula de la reunión. La card no se borra.
+      </p>
+    </ConfirmModal>
   </div>
 </template>

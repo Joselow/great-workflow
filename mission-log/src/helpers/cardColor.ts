@@ -25,3 +25,8 @@ export const cardTileStyle = (color: string) => ({
   borderColor: isLightHex(color) ? lightEdge.borderColor : `${color}99`,
   boxShadow: isLightHex(color) ? lightEdge.boxShadow : undefined,
 })
+
+export const actionRowStyle = (color: string) => ({
+  backgroundColor: `color-mix(in srgb, ${color} 28%, white)`,
+  borderColor: `color-mix(in srgb, ${color} 42%, #e7e5e4)`,
+})

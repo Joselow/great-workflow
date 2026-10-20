@@ -1,19 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
 
 import ActionTemplateFormModal from '@/components/ActionTemplate/ActionTemplateFormModal.vue'
 import ActionTemplateSection from '@/components/ActionTemplate/ActionTemplateSection.vue'
-import AssociateCardModal from '@/components/Card/AssociateCardModal.vue'
 import CommonLoader from '@/commons/CommonLoader.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 
 import { useActionTemplate } from '@/composables/useActionTemplate'
-import { useCard } from '@/composables/useCard'
 import { DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
-import { debounce } from '@/utils/debounce'
 
-import type { CardListItem } from '@/interfaces/card'
 import type {
   ActionTemplate,
   ActionTemplateDraft,
@@ -21,19 +16,15 @@ import type {
   ActionTemplateWritePayload,
 } from '@/interfaces/actionTemplate'
 
-const PAGE_SIZE = 12
-
-const sections: { module: ActionTemplateModule; title: string }[] = [
-  { module: 'all', title: 'Todos' },
-  { module: 'log', title: 'Logs' },
-  { module: 'meeting', title: 'Reuniones' },
-  { module: 'requirement', title: 'Requerimientos' },
-  { module: 'task', title: 'Tareas' },
+const sections: { module: ActionTemplateModule; title: string; icon: string }[] = [
+  { module: 'all', title: 'Todos los módulos', icon: 'grid_view' },
+  { module: 'log', title: 'Logs', icon: 'edit_note' },
+  { module: 'meeting', title: 'Reuniones', icon: 'co_present' },
+  { module: 'requirement', title: 'Requerimientos', icon: 'assignment' },
+  { module: 'task', title: 'Tareas', icon: 'task_alt' },
 ]
 
-const router = useRouter()
 const { loading, templates, getActionTemplates, createActionTemplate, updateActionTemplate, deleteActionTemplate } = useActionTemplate()
-const { loading: cardsLoading, getCards } = useCard()
 
 const emptyDraft = (module: ActionTemplateModule): ActionTemplateDraft => ({
   module,
@@ -50,12 +41,6 @@ const formOpen = ref(false)
 const draft = ref<ActionTemplateDraft>(emptyDraft('all'))
 const confirmOpen = ref(false)
 const pendingDelete = ref<ActionTemplate | null>(null)
-
-const associateOpen = ref(false)
-const associateQuery = ref('')
-const associatePage = ref(1)
-const associateItems = ref<CardListItem[]>([])
-const associateTotal = ref(0)
 
 const templatesFor = (module: ActionTemplateModule) =>
   templates.value.filter((template) => template.module === module)
@@ -121,63 +106,6 @@ const confirmDelete = async () => {
   await getActionTemplates()
 }
 
-const loadAssociateCards = async () => {
-  const result = await getCards({
-    isPrompt: true,
-    q: associateQuery.value.trim() || undefined,
-    page: associatePage.value,
-    limit: PAGE_SIZE,
-  })
-
-  if (!result.success || !result.data) {
-    associateItems.value = []
-    associateTotal.value = 0
-    return
-  }
-
-  associateItems.value = result.data.items
-  associateTotal.value = result.data.total
-}
-
-const loadAssociateDebounced = debounce(() => {
-  void loadAssociateCards()
-}, 300)
-
-watch(associateOpen, (open) => {
-  if (!open) return
-  associateQuery.value = ''
-  associatePage.value = 1
-  void loadAssociateCards()
-})
-
-const onAssociateSearch = (query: string) => {
-  associateQuery.value = query
-  associatePage.value = 1
-  loadAssociateDebounced()
-}
-
-const onAssociatePage = (page: number) => {
-  associatePage.value = page
-  void loadAssociateCards()
-}
-
-const onSelectCard = (card: CardListItem) => {
-  draft.value = {
-    ...draft.value,
-    contentMode: 'card',
-    card: {
-      id: card.id,
-      name: card.name,
-      color: card.color,
-      description: card.description,
-    },
-  }
-}
-
-const onEditCard = (id: string) => {
-  void router.push({ name: 'editCard', params: { id } })
-}
-
 onMounted(() => {
   void getActionTemplates()
 })
@@ -187,7 +115,7 @@ onMounted(() => {
   <div class="mx-auto w-full min-w-0 max-w-5xl overflow-x-hidden">
     <CommonLoader v-if="loading" />
 
-    <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Action Templates</h1>
+    <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Template Actions</h1>
 
     <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
       <ActionTemplateSection
@@ -195,6 +123,7 @@ onMounted(() => {
         :key="section.module"
         :class="section.module === 'all' ? 'lg:col-span-2' : ''"
         :title="section.title"
+        :icon="section.icon"
         :templates="templatesFor(section.module)"
         @add="onAdd(section.module)"
         @edit="onEdit"
@@ -207,20 +136,6 @@ onMounted(() => {
       v-model:draft="draft"
       :saving="loading"
       @save="onSave"
-      @associate="associateOpen = true"
-      @edit-card="onEditCard"
-    />
-
-    <AssociateCardModal
-      v-model="associateOpen"
-      :items="associateItems"
-      :loading="cardsLoading"
-      :page="associatePage"
-      :total="associateTotal"
-      :page-size="PAGE_SIZE"
-      @search="onAssociateSearch"
-      @page="onAssociatePage"
-      @select="onSelectCard"
     />
 
     <ConfirmModal

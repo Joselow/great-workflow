@@ -22,7 +22,7 @@ const handleCopy = () => {
 
 <template>
   <div
-    class="relative flex min-h-36 w-full flex-col rounded-2xl border px-4 py-4"
+    class="relative flex min-h-36 w-full min-w-0 flex-col overflow-hidden rounded-2xl border px-4 py-4"
     :style="cardTileStyle(props.card.color)"
   >
     <div class="absolute top-3 right-3 z-10 flex items-center gap-1">
@@ -55,7 +55,7 @@ const handleCopy = () => {
 
     <button
       type="button"
-      class="flex min-h-28 w-full cursor-pointer flex-col items-start text-left"
+      class="flex min-h-28 w-full min-w-0 cursor-pointer flex-col items-start overflow-hidden text-left"
       @click="emit('select', props.card.id)"
     >
       <div class=" flex flex-wrap gap-1.5 pr-20">
@@ -85,7 +85,7 @@ const handleCopy = () => {
 
       <p
         v-if="card.description"
-        class="mt-2 line-clamp-3 text-xs text-gray-600 dark:text-gray-300"
+        class="mt-2 w-full min-w-0 overflow-hidden line-clamp-3 break-words text-xs text-gray-600 dark:text-gray-300"
       >
         {{ card.description }}
       </p>

@@ -63,16 +63,18 @@ const confirmDelete = () => {
 
         <button
           type="button"
-          class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-cyan-500/40 
-          bg-cyan-400 dark:bg-cyan-800/50 hover:bg-cyan-500 dark:hover:bg-cyan-700/50
+          class="inline-flex cursor-pointer items-center justify-center rounded-lg 
+          border border-cyan-500/40 
+          text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow-sm 
+
           px-2 py-0 text-white"
           title="Ver tareas"
           aria-label="Ver tareas"
           @click="emit('tasks', requirement)"
         >
-          <span class="material-symbols-outlined"
+          <span class="material-symbols-outlined mr-1"
             style="font-size: 18px;"
-          >task_alt</span>
+          >checklist_rtl</span>
           Tareas
         </button>
 

@@ -60,7 +60,7 @@ const commands: KeyboardCommand[] = [
     keys: ['Mayús', 'L'],
     match: (event) => isShiftLetter(event, 'l'),
     run: () => {
-      router.push({ name: 'logger' })
+      router.push({ name: 'home' })
     },
   },
   {

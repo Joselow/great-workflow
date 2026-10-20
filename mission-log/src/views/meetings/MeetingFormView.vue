@@ -28,9 +28,9 @@ import type { MeetingDraft, MeetingLogLink, MeetingNextStep, MeetingQualificatio
 const MeetingQualificationModal = defineAsyncComponent(
   () => import('@/components/Meeting/MeetingQualificationModal.vue'),
 )
-const MeetingRequirementsTasks = defineAsyncComponent(
-  () => import('@/components/Meeting/MeetingRequirementsTasks.vue'),
-)
+// const MeetingRequirementsTasks = defineAsyncComponent(
+//   () => import('@/components/Meeting/MeetingRequirementsTasks.vue'),
+// )
 import { formatHours } from '@/utils/date'
 
 const route = useRoute()
@@ -597,11 +597,11 @@ const handleConfirmDelete = async (id: string) => {
       </div>
     </div>
 
-    <MeetingRequirementsTasks
+    <!-- <MeetingRequirementsTasks
       v-if="draft.id && persistedProjectId"
       :meeting-id="draft.id"
       :project-id="persistedProjectId"
-    />
+    /> -->
 
     <DangerZone
       v-if="draft.id"

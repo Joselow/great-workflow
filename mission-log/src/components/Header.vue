@@ -3,36 +3,23 @@ import ThemeToggle from './ThemeToggle.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue';
 import HeaderProjectSlot from '@/components/Header/HeaderProjectSlot.vue';
 
-import { useRoute } from 'vue-router'
-
 import { useAuth } from '../composables/useAuth'
 import { useShowStates } from '@/composables/useShowStates.ts';
 import { keyboardCommands } from '@/composables/useKeyboardCommands';
 
 const nameApp = import.meta.env.VITE_NAME_APP ?? 'NAME'
 
-const route = useRoute()
 const { logout } = useAuth()
 const { openHelp } = keyboardCommands
 
 const sectionLinks = [
-  { label: 'Logs', name: 'logger' },
+  { label: 'Logs', name: 'home' },
   { label: 'Reuniones', name: 'meetings' },
   { label: 'Requerimientos', name: 'requirements' },
   { label: 'Tareas', name: 'tasks' },
   { label: 'Cards', name: 'cards' },
-  { label: 'Acciones', name: 'actionTemplates' },
+  { label: 'Template actions', name: 'actionTemplates' },
 ] as const
-
-const isCurrentSection = (label: string) => {
-  if (label === 'Logs') return route.name === 'home' || route.name === 'logger'
-  if (label === 'Reuniones') return route.path.startsWith('/meetings')
-  if (label === 'Cards') return route.path.startsWith('/cards')
-  if (label === 'Requerimientos') return route.name === 'requirements'
-  if (label === 'Tareas') return route.name === 'tasks'
-  if (label === 'Acciones') return route.name === 'actionTemplates'
-  return false
-}
 
 const props = withDefaults(defineProps<{
   full?: boolean
@@ -113,9 +100,8 @@ const handleConfirmed = () => {
           v-for="link in sectionLinks"
           :key="link.name"
           :to="{ name: link.name }"
-          :class="isCurrentSection(link.label)
-            ? 'font-semibold text-brand-orange'
-            : 'text-gray-600 dark:text-gray-300'"
+          class="text-xs text-gray-800 opacity-50 dark:text-gray-300 [&.is-active]:font-semibold [&.is-active]:text-brand-orange [&.is-active]:opacity-100"
+          active-class="is-active"
         >
           {{ link.label }}
         </router-link>

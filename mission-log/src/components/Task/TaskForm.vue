@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+// import { computed } from 'vue'
 
 import type { TaskDraft } from '@/interfaces/task'
 
@@ -19,12 +19,12 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const requirementValue = computed({
-  get: () => draft.value.requirementId ?? '',
-  set: (value: string) => {
-    draft.value.requirementId = value || null
-  },
-})
+// const requirementValue = computed({
+//   get: () => draft.value.requirementId ?? '',
+//   set: (value: string) => {
+//     draft.value.requirementId = value || null
+//   },
+// })
 
 const onSubmit = () => {
   if (props.saving) return

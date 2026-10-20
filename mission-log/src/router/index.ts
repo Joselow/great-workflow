@@ -1,7 +1,13 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { h } from 'vue'
+import { RouterView, createRouter, createWebHistory } from 'vue-router'
 
 import { authGuard } from '@/guards/authGuard'
 import { projectGuard } from '@/guards/projectGuard'
+
+const sectionOutlet = {
+  name: 'SectionOutlet',
+  render: () => h(RouterView),
+}
 
 const routes = [
   {
@@ -19,50 +25,53 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: () => import('@/views/logs/LogsView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/logger',
-    name: 'logger',
+    alias: '/logger',
     component: () => import('@/views/logs/LogsView.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/meetings',
-    name: 'meetings',
-    component: () => import('@/views/meetings/MeetingsView.vue'),
+    component: sectionOutlet,
     meta: { requiresAuth: true },
-  },
-  {
-    path: '/meetings/new',
-    name: 'newMeeting',
-    component: () => import('@/views/meetings/MeetingFormView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/meetings/:id',
-    name: 'editMeeting',
-    component: () => import('@/views/meetings/MeetingFormView.vue'),
-    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'meetings',
+        component: () => import('@/views/meetings/MeetingsView.vue'),
+      },
+      {
+        path: 'new',
+        name: 'newMeeting',
+        component: () => import('@/views/meetings/MeetingFormView.vue'),
+      },
+      {
+        path: ':id',
+        name: 'editMeeting',
+        component: () => import('@/views/meetings/MeetingFormView.vue'),
+      },
+    ],
   },
   {
     path: '/cards',
-    name: 'cards',
-    component: () => import('@/views/cards/CardsView.vue'),
+    component: sectionOutlet,
     meta: { requiresAuth: true },
-  },
-  {
-    path: '/cards/new',
-    name: 'newCard',
-    component: () => import('@/views/cards/CardFormView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/cards/:id',
-    name: 'editCard',
-    component: () => import('@/views/cards/CardFormView.vue'),
-    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'cards',
+        component: () => import('@/views/cards/CardsView.vue'),
+      },
+      {
+        path: 'new',
+        name: 'newCard',
+        component: () => import('@/views/cards/CardFormView.vue'),
+      },
+      {
+        path: ':id',
+        name: 'editCard',
+        component: () => import('@/views/cards/CardFormView.vue'),
+      },
+    ],
   },
   {
     path: '/requirements',

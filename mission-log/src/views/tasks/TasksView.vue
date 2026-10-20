@@ -87,12 +87,12 @@ const setStatus = (value: StatusFilter) => {
   void loadTasks(projectId)
 }
 
-const setRequirement = (value: RequirementFilter) => {
-  requirementFilter.value = value
-  const projectId = activeProject.value?.id
-  if (!projectId) return
-  void loadTasks(projectId)
-}
+// const setRequirement = (value: RequirementFilter) => {
+//   requirementFilter.value = value
+//   const projectId = activeProject.value?.id
+//   if (!projectId) return
+//   void loadTasks(projectId)
+// }
 
 const onEdit = (task: Task) => {
   editingId.value = task.id
