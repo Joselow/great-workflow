@@ -20,3 +20,9 @@ Usa tarjetas con bordes suaves redondeados pequeños y delineado fino
 Info:
 - El writer global se muestra como panel lateral derecho en escritorio y como pestaña inferior en móviles.
 - Cerrado, el writer no debe alterar el ancho del contenido ni superponerse a la interfaz.
+
+
+*Watch*
+Usa watch con criterio, moderación y escalabilidad. Úsalo cuando varios datos cambien y una misma función deba reaccionar, como en filtros. 
+Evítalo como mecanismo general de reacción; prioriza soluciones simples y claras.
+

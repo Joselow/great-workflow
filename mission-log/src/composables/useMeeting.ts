@@ -104,6 +104,35 @@ export function useMeeting() {
     }
   }
 
+  const patchMeeting = async (
+    id: string,
+    payload: Partial<MeetingWritePayload>,
+  ): Promise<ResponseComposables<Meeting>> => {
+    try {
+      const { data } = await apiApp.put(`/meeting/${id}`, payload)
+      return { success: true, data }
+    } catch {
+      return { success: false }
+    }
+  }
+
+  const finishMeeting = async (
+    id: string,
+    duration: number,
+  ): Promise<ResponseComposables<Meeting>> => {
+    loading.value = true
+
+    try {
+      const { data } = await apiApp.post(`/meeting/${id}/finish`, { duration })
+      successToast('Duración guardada')
+      return { success: true, data }
+    } catch {
+      return { success: false }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const deleteMeeting = async (id: string): Promise<ResponseComposables<null>> => {
     loading.value = true
 
@@ -124,6 +153,8 @@ export function useMeeting() {
     getMeetingById,
     getMeetings,
     updateMeeting,
+    patchMeeting,
+    finishMeeting,
     qualifyMeeting,
     deleteMeeting,
   }

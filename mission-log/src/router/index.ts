@@ -8,6 +8,7 @@ const sectionOutlet = {
   name: 'SectionOutlet',
   render: () => h(RouterView),
 }
+//sectionOutlet es un componente contenedor que permite mostrar las rutas hijas mediante RouterView.
 
 const routes = [
   {
@@ -49,6 +50,13 @@ const routes = [
         name: 'editMeeting',
         component: () => import('@/views/meetings/MeetingFormView.vue'),
       },
+      {
+        path: ':id/run',
+        name: 'runMeeting',
+        component: () => import('@/views/meetings/MeetingRunView.vue'),
+        meta: { requiresAuth: true, bare: true },
+      },
+     
     ],
   },
   {
