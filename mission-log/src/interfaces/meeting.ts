@@ -40,6 +40,11 @@ export interface Meeting {
   lessons: string | null
   executed: boolean
   objectiveAchieved: boolean | null
+  additionalInfo: string | null
+  platform: string | null
+  meetingUrl: string | null
+  accessDetails: string | null
+  duration: number | null
   cards: CardListItem[]
   logs: MeetingLogLink[]
   createdAt: string
@@ -63,7 +68,21 @@ export interface MeetingWritePayload {
   summary: string | null
   executed: boolean
   objectiveAchieved: boolean | null
+  additionalInfo: string | null
+  platform: string | null
+  meetingUrl: string | null
+  accessDetails: string | null
 }
+
+export const MEETING_PLATFORM_OPTIONS = [
+  { value: '', label: 'Sin plataforma' },
+  { value: 'meet', label: 'Google Meet' },
+  { value: 'zoom', label: 'Zoom' },
+  { value: 'teams', label: 'Teams' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'presencial', label: 'Presencial' },
+  { value: 'otro', label: 'Otro' },
+] as const
 
 export interface MeetingDraft extends MeetingWritePayload {
   id?: string

@@ -23,7 +23,7 @@ import { generateMeetingSummary } from '@/helpers/meetingSummary'
 import { COLOR_ISSUE, DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
 import { cardSurfaceStyle, isLightHex } from '@/helpers/cardColor'
 
-import type { MeetingDraft, MeetingLogLink, MeetingNextStep, MeetingQualificationPayload, MeetingWriteLogLink, MeetingWritePayload } from '@/interfaces/meeting'
+import { MEETING_PLATFORM_OPTIONS, type Meeting, type MeetingDraft, type MeetingLogLink, type MeetingNextStep, type MeetingQualificationPayload, type MeetingWriteLogLink, type MeetingWritePayload } from '@/interfaces/meeting'
 
 const MeetingQualificationModal = defineAsyncComponent(
   () => import('@/components/Meeting/MeetingQualificationModal.vue'),
@@ -92,6 +92,10 @@ const emptyDraft = (): MeetingDraft => ({
   summary: null,
   executed: false,
   objectiveAchieved: null,
+  additionalInfo: '',
+  platform: '',
+  meetingUrl: '',
+  accessDetails: '',
 })
 
 const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
@@ -116,6 +120,17 @@ const toPayload = (current: MeetingDraft): MeetingWritePayload => ({
   summary: emptyToNull(current.summary),
   executed: current.executed,
   objectiveAchieved: current.objectiveAchieved,
+  additionalInfo: emptyToNull(current.additionalInfo),
+  platform: emptyToNull(current.platform),
+  meetingUrl: emptyToNull(current.meetingUrl),
+  accessDetails: emptyToNull(current.accessDetails),
+})
+
+const logisticsDraft = (data: Meeting) => ({
+  additionalInfo: data.additionalInfo ?? '',
+  platform: data.platform ?? '',
+  meetingUrl: data.meetingUrl ?? '',
+  accessDetails: data.accessDetails ?? '',
 })
 
 const startView = async () => {
@@ -152,6 +167,7 @@ const startView = async () => {
     summary: data.summary,
     executed: data.executed,
     objectiveAchieved: data.objectiveAchieved,
+    ...logisticsDraft(data),
   }
   persistedProjectId.value = data.projectId
 }
@@ -221,6 +237,7 @@ const handleConfirmSave = async () => {
       objectiveAchieved: data.objectiveAchieved,
       summary: data.summary,
       lessons: data.lessons,
+      ...logisticsDraft(data),
     }
     persistedProjectId.value = data.projectId
     offModalConfirm()
@@ -237,6 +254,7 @@ const handleConfirmSave = async () => {
     cards: data.cards,
     logLinks: attachedLogLinks(data.logs),
     nextSteps: nextStepsFromLogs(data.logs),
+    ...logisticsDraft(data),
   }
   persistedProjectId.value = data.projectId
   offModalConfirm()
@@ -280,6 +298,11 @@ const copyMeetingSummary = async () => {
   }
 
 
+}
+
+const openRun = () => {
+  if (!draft.value?.id) return
+  router.push({ name: 'runMeeting', params: { id: draft.value.id } })
 }
 
 const openQualification = () => {
@@ -522,6 +545,51 @@ const handleConfirmDelete = async (id: string) => {
           </div> -->
           <MeetingCardPanel v-model="draft.cards" />
 
+          <div class="space-y-2 rounded-md border-2 border-gray-200 p-2 dark:border-gray-800">
+            <p class="text-md font-semibold">Plataforma</p>
+            <label class="block text-xs font-semibold">
+              Plataforma
+              <select
+                v-model="draft.platform"
+                class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+              >
+                <option
+                  v-for="option in MEETING_PLATFORM_OPTIONS"
+                  :key="option.value || 'empty'"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="block text-xs font-semibold">
+              Enlace de la reunión
+              <input
+                v-model="draft.meetingUrl"
+                type="url"
+                placeholder="https://"
+                class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+              />
+            </label>
+            <label class="block text-xs font-semibold">
+              Detalles de acceso
+              <textarea
+                v-model="draft.accessDetails"
+                rows="2"
+                placeholder="Contraseña, código o sala"
+                class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+              />
+            </label>
+            <label class="block text-xs font-semibold">
+              Información adicional
+              <textarea
+                v-model="draft.additionalInfo"
+                rows="2"
+                class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+              />
+            </label>
+          </div>
+
           <div 
             class="mt-2 border border-2 border-gray-200 dark:border-gray-800 rounded-md p-2"
           >
@@ -563,6 +631,15 @@ const handleConfirmDelete = async (id: string) => {
             <span class="material-symbols-outlined align-middle">file_copy</span>
             Copiar Resumen 
            </button>
+           <button
+            v-if="draft.id"
+            type="button"
+            class="mt-2 w-full cursor-pointer rounded-md border border-emerald-600/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200"
+            @click="openRun"
+           >
+            <span class="material-symbols-outlined align-middle">play_arrow</span>
+            Iniciar reunión
+           </button>
            <!-- <button
             type="button"
             class="cursor-pointer rounded-md border px-3 py-1 text-xs font-semibold"
@@ -592,7 +669,9 @@ const handleConfirmDelete = async (id: string) => {
           @click="handleSaveClick"
         >
           <span class="material-symbols-outlined align-middle" style="font-size: 18px;">save</span>
-          Guardar
+          {{ 
+            draft.id ? 'Guardar cambios' : 'Crear reunión'
+          }}
         </button>
       </div>
     </div>

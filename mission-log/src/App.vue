@@ -32,11 +32,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen max-w-full transition-colors mx-auto">
+  <div
+    class="max-w-full transition-colors mx-auto"
+    :class="route.meta.bare ? 'h-dvh overflow-hidden' : 'min-h-screen'"
+  >
     <ToastLauncher/>
 
     <FullScreenLoader
       v-if="route.meta.requiresAuth && !user" />
+
+    <RouterView v-else-if="route.meta.requiresAuth && route.meta.bare" />
 
     <template v-else-if="route.meta.requiresAuth">
       <Header
