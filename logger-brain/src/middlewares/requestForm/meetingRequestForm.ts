@@ -27,6 +27,10 @@ export const storeMeetingRequestForm = (req: Request, _res: Response, next: Next
         lessons,
         executed,
         objectiveAchieved,
+        additionalInfo,
+        platform,
+        meetingUrl,
+        accessDetails,
     } = req.body;
 
     const payload = {
@@ -46,6 +50,10 @@ export const storeMeetingRequestForm = (req: Request, _res: Response, next: Next
         lessons,
         executed,
         objectiveAchieved,
+        additionalInfo,
+        platform,
+        meetingUrl,
+        accessDetails,
     };
 
     const validated = id
@@ -57,6 +65,7 @@ export const storeMeetingRequestForm = (req: Request, _res: Response, next: Next
         throw new BadRequestError400("The given data was invalid", errors);
     }
 
+    req.body = validated.data;
     next();
 };
 

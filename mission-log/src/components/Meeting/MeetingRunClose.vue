@@ -1,26 +1,31 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import MeetingRunNotebook from '@/components/Meeting/MeetingRunNotebook.vue'
+
 import { errorToast } from '@/composables/useAlerts'
 import { markersToHtml } from '@/helpers/richText'
 import type { Meeting, MeetingNextStep } from '@/interfaces/meeting'
 
 const props = defineProps<{
   meeting: Meeting
-  frozen: boolean
+  saveSteps: (steps: MeetingNextStep[]) => Promise<boolean>
+  canFinish: boolean
 }>()
 
 const additionalInfo = defineModel<string>('additionalInfo', { required: true })
 
 const emit = defineEmits<{
   commit: []
-  saveSteps: [steps: MeetingNextStep[]]
   finish: []
 }>()
 
 const editingStepId = ref<string | null>(null)
 const editingStepDescription = ref('')
+const nextStepDraft = ref('')
+const nextStepComposerOpen = ref(false)
+const savingStep = ref(false)
+const nextStepInput = ref<HTMLInputElement | null>(null)
 
 const nextSteps = computed(() =>
   props.meeting.logs.filter((log) => log.source === 'meeting'),
@@ -48,7 +53,7 @@ const startEditStep = (id: string, description: string) => {
 const saveStep = (id: string) => {
   const description = editingStepDescription.value.trim()
   const current = nextSteps.value.find((step) => step.id === id)
-  if (!current) return
+  if (!current || savingStep.value) return
   if (description === current.description) {
     editingStepId.value = null
     return
@@ -58,12 +63,41 @@ const saveStep = (id: string) => {
     return
   }
 
-  emit('saveSteps', stepPayload({ id, description }))
+  void props.saveSteps(stepPayload({ id, description }))
 }
 
 const removeStep = (id: string) => {
+  if (savingStep.value) return
   if (editingStepId.value === id) editingStepId.value = null
-  emit('saveSteps', stepPayload({ id, description: '' }))
+  void props.saveSteps(stepPayload({ id, description: '' }))
+}
+
+const openNextStepComposer = async () => {
+  nextStepComposerOpen.value = true
+  nextStepDraft.value = ''
+  await nextTick()
+  nextStepInput.value?.focus()
+}
+
+const addNextStep = async () => {
+  if (!canEditSteps.value || savingStep.value) return
+
+  const description = nextStepDraft.value.trim()
+  if (description.length < 2) {
+    errorToast('Cada siguiente paso necesita al menos 2 caracteres')
+    return
+  }
+
+  savingStep.value = true
+  const saved = await props.saveSteps([
+    ...nextSteps.value.map((step) => ({ logId: step.id, description: step.description })),
+    { description },
+  ])
+  savingStep.value = false
+  if (!saved) return
+
+  nextStepDraft.value = ''
+  nextStepComposerOpen.value = false
 }
 
 watch(nextSteps, () => {
@@ -98,7 +132,8 @@ watch(nextSteps, () => {
       <MeetingRunNotebook
         :meeting-id="meeting.id"
         :project-id="meeting.projectId"
-        hide-add
+        :hide-add="!meeting.projectId"
+        add-on-row
       />
     </div>
 
@@ -138,6 +173,7 @@ watch(nextSteps, () => {
           @click="saveStep(step.id)"
         >
           <span class="material-symbols-outlined" style="font-size: 1rem;">check</span>
+          Actualizar
         </button>
         <button
           v-if="canEditSteps && editingStepId !== step.id"
@@ -158,10 +194,41 @@ watch(nextSteps, () => {
           <span class="material-symbols-outlined" style="font-size: 1rem;">delete</span>
         </button>
       </div>
+      <div v-if="canEditSteps && nextStepComposerOpen" class="flex items-center gap-2">
+        <input
+          ref="nextStepInput"
+          v-model="nextStepDraft"
+          type="text"
+          class="min-w-0 flex-1 rounded-md border border-black/15 bg-white px-2 py-1 text-xs text-gray-800 outline-none transition-colors hover:border-gray-500 focus:border-gray-900 focus:ring-1 focus:ring-gray-400 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-100 dark:hover:border-white/40 dark:focus:border-white"
+          placeholder="Próximo paso"
+          @keydown.enter.prevent="addNextStep"
+          @keydown.esc.prevent="nextStepComposerOpen = false"
+        />
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-black/15 bg-white text-gray-700 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-200"
+          aria-label="Guardar siguiente paso"
+          @click="addNextStep"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1rem;">add</span>
+        </button>
+      </div>
+      <div class="text-end"
+        v-else-if="canEditSteps"
+      >
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-black/15 bg-white text-gray-700 transition-colors hover:border-gray-500 hover:bg-gray-50 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-white/10"
+          aria-label="Agregar siguiente paso"
+          @click="openNextStepComposer"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1rem;">add</span>
+        </button>
+      </div>
     </div>
 
-    <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-      <p class="shrink-0 text-sm font-semibold leading-5 text-orange-600 sm:w-36 dark:text-orange-400">
+    <div class="mt-16 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+      <p class="shrink-0 text-md font-semibold leading-5 text-orange-600 sm:w-36 dark:text-orange-400">
         
         <span class="material-symbols-outlined align-middle">handshake</span>
         Muchas gracias<br>Participantes
@@ -171,15 +238,15 @@ watch(nextSteps, () => {
       </div>
     </div>
 
-    <div v-if="!frozen" class="mt-10 flex justify-center">
+    <div v-if="canFinish" class="mt-10 flex justify-end">
       <button
         type="button"
-        class="inline-flex cursor-pointer items-center gap-1 rounded-md border border-emerald-600/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
+        class="inline-flex cursor-pointer items-center rounded-md border border-emerald-600/40 bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200"
         @click="emit('finish')"
       >
-        <span class="material-symbols-outlined" style="font-size: 1.1rem;">task_alt</span>
         Finalizar
       </button>
     </div>
+
   </section>
 </template>

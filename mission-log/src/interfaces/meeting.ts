@@ -45,6 +45,9 @@ export interface Meeting {
   meetingUrl: string | null
   accessDetails: string | null
   duration: number | null
+  startedAt: string | null
+  runningSince: string | null
+  finishedAt: string | null
   cards: CardListItem[]
   logs: MeetingLogLink[]
   createdAt: string

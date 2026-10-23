@@ -116,22 +116,21 @@ export function useMeeting() {
     }
   }
 
-  const finishMeeting = async (
+  const postClock = async (
     id: string,
-    duration: number,
+    action: 'resume' | 'pause' | 'finish',
   ): Promise<ResponseComposables<Meeting>> => {
-    loading.value = true
-
     try {
-      const { data } = await apiApp.post(`/meeting/${id}/finish`, { duration })
-      successToast('Duración guardada')
+      const { data } = await apiApp.post(`/meeting/${id}/clock/${action}`)
       return { success: true, data }
     } catch {
       return { success: false }
-    } finally {
-      loading.value = false
     }
   }
+
+  const resumeMeetingClock = (id: string) => postClock(id, 'resume')
+  const pauseMeetingClock = (id: string) => postClock(id, 'pause')
+  const finishMeetingClock = (id: string) => postClock(id, 'finish')
 
   const deleteMeeting = async (id: string): Promise<ResponseComposables<null>> => {
     loading.value = true
@@ -154,7 +153,9 @@ export function useMeeting() {
     getMeetings,
     updateMeeting,
     patchMeeting,
-    finishMeeting,
+    resumeMeetingClock,
+    pauseMeetingClock,
+    finishMeetingClock,
     qualifyMeeting,
     deleteMeeting,
   }

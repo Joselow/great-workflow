@@ -45,6 +45,21 @@ const setClearSelectedLog = (action: (() => void) | null) => {
   clearSelectedLog = action
 }
 
+type RoomActArrows = {
+  prev: () => void
+  next: () => void
+  enabled: () => boolean
+}
+
+let roomActArrows: RoomActArrows | null = null
+
+const setRoomActArrows = (actions: RoomActArrows | null) => {
+  roomActArrows = actions
+}
+
+const roomArrowsEnabled = () =>
+  router.currentRoute.value.name === 'runMeeting' && Boolean(roomActArrows?.enabled())
+
 const isShiftLetter = (event: KeyboardEvent, letter: string) =>
   event.shiftKey && event.key.toLowerCase() === letter
 
@@ -157,6 +172,28 @@ const commands: KeyboardCommand[] = [
       router.push({ name: 'tasks' })
     },
   },
+  {
+    id: 'room-act-prev',
+    group: 'navigate',
+    label: 'Acto anterior',
+    icon: 'chevron_left',
+    scopeLabel: 'En la sala de la reunión',
+    keys: ['←'],
+    match: (event) => event.key === 'ArrowLeft',
+    when: roomArrowsEnabled,
+    run: () => roomActArrows?.prev(),
+  },
+  {
+    id: 'room-act-next',
+    group: 'navigate',
+    label: 'Acto siguiente',
+    icon: 'chevron_right',
+    scopeLabel: 'En la sala de la reunión',
+    keys: ['→'],
+    match: (event) => event.key === 'ArrowRight',
+    when: roomArrowsEnabled,
+    run: () => roomActArrows?.next(),
+  },
 ]
 
 const isTypingTarget = (target: EventTarget | null) => {
@@ -193,4 +230,5 @@ export const keyboardCommands = {
   toggleHelp,
   handleKeydown,
   setClearSelectedLog,
+  setRoomActArrows,
 }

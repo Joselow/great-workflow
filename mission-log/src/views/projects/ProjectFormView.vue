@@ -78,6 +78,8 @@ const handleConfirmSelection = () => {
     name: draft.name!,
     color: draft.color!,
   })
+
+  router.push({ name: 'home' })
 }
 
 const handleConfirmDelete = async (id: string) => {

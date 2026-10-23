@@ -3,8 +3,7 @@ import { and, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from '../db/index.js';
 import { cards, type CardSection, type NewCard } from "../db/schemas/cards.js";
 import { projects } from "../db/schemas/projects.js";
-import { getProjectById } from "./projectService.js";
-import { BadRequestError400 } from "../errors/BadRequestError400.js";
+import { assertOwnedProject, getProjectById } from "./projectService.js";
 import { NotFoundError404 } from "../errors/NotFoundError404.js";
 import { clearActionTemplateCardLinks } from "./actionTemplateService.js";
 
@@ -25,15 +24,6 @@ export interface CardListFilters {
     flMeeting?: boolean;
     page?: number;
     limit?: number;
-}
-
-async function assertOwnedProject(projectId: string | null | undefined, userId: number) {
-    if (!projectId) return;
-
-    const project = await getProjectById(projectId);
-    if (!project || project.userId !== userId) {
-        throw new BadRequestError400('Project not found');
-    }
 }
 
 function likePattern(raw: string): string {
@@ -79,7 +69,9 @@ async function projectSummary(projectId: string | null) {
 }
 
 export async function createCard(userId: number, input: CardWriteInput) {
-    await assertOwnedProject(input.projectId, userId);
+    if (input.projectId) {
+        await assertOwnedProject(input.projectId, userId);
+    }
 
     const isPrompt = input.isPrompt ?? false;
 
@@ -111,7 +103,7 @@ export async function getCardByIdForUser(id: string, userId: number) {
 export async function updateCard(id: string, userId: number, changes: CardWriteInput) {
     const existing = await getCardByIdForUser(id, userId);
 
-    if (changes.projectId !== undefined) {
+    if (changes.projectId) {
         await assertOwnedProject(changes.projectId, userId);
     }
 

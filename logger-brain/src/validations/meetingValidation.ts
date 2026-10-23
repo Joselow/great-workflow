@@ -31,6 +31,18 @@ const nextStepSchema = z.object({
     description: z.string(),
 });
 
+const MEETING_PLATFORMS = ["meet", "zoom", "teams", "whatsapp", "presencial", "otro"] as const;
+
+const blankToNull = (value: unknown) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+};
+
+const nullableText = z.preprocess(blankToNull, z.string().nullable().optional());
+
 const meetingBody = {
     title: z.string().min(1).max(100),
     date: z.string().min(1),
@@ -48,6 +60,10 @@ const meetingBody = {
     lessons: z.string().nullable().optional(),
     executed: z.boolean().optional(),
     objectiveAchieved: z.boolean().nullable().optional(),
+    additionalInfo: nullableText,
+    platform: z.preprocess(blankToNull, z.enum(MEETING_PLATFORMS).nullable().optional()),
+    meetingUrl: nullableText,
+    accessDetails: nullableText,
 };
 
 const requireLessonsWhenNotAchieved = (
@@ -123,3 +139,4 @@ export const MeetingListQuerySchema = z
 export const verifyMeetingListQuerySchema = (payload: unknown) => {
     return MeetingListQuerySchema.safeParse(payload);
 };
+

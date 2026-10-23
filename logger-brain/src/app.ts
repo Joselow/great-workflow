@@ -1,6 +1,5 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
 import express from "express";
@@ -10,7 +9,8 @@ import { env, isProduction } from "./config/env";
 import { router } from "./routes";
 
 import { errorHandler } from "./middlewares/handlers/errorHandler";
-import { notFound } from "./middlewares/handlers/nodFound";
+import { notFound } from "./middlewares/handlers/notFound";
+import { globalLimiter } from "./middlewares/security/rateLimiter";
 
 export function createApp() {
   const app = express();
@@ -22,14 +22,7 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  app.use(
-    rateLimit({
-      windowMs: 10 * 60 * 1000,
-      limit: 1000,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-  );
+  app.use(globalLimiter);
 
   app.use("/api/v1", router);
   

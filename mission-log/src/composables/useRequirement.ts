@@ -32,6 +32,7 @@ export function useRequirement() {
 
   const createRequirement = async (
     payload: RequirementCreatePayload,
+    showMessage = true,
   ): Promise<ResponseComposables<Requirement>> => {
     loading.value = true
 
@@ -43,7 +44,7 @@ export function useRequirement() {
       if (payload.meetingId) body.meetingId = payload.meetingId
 
       const { data } = await apiApp.post<Requirement>('/requirement', body)
-      successToast('Requerimiento guardado')
+      if (showMessage) successToast('Requerimiento guardado')
       return { success: true, data }
     } catch {
       return { success: false }
@@ -54,7 +55,8 @@ export function useRequirement() {
 
   const updateRequirement = async (
     id: string,
-    name: string,
+    name: string, 
+    showMessage = false,
   ): Promise<ResponseComposables<Requirement>> => {
     loading.value = true
 
@@ -62,7 +64,8 @@ export function useRequirement() {
       const { data } = await apiApp.put<Requirement>(`/requirement/${id}`, {
         name: name.trim(),
       })
-      successToast('Requerimiento actualizado')
+      if (showMessage) successToast('Requerimiento actualizado')
+
       return { success: true, data }
     } catch {
       return { success: false }
@@ -71,12 +74,12 @@ export function useRequirement() {
     }
   }
 
-  const deleteRequirement = async (id: string): Promise<ResponseComposables<null>> => {
+  const deleteRequirement = async (id: string, showMessage = false): Promise<ResponseComposables<null>> => {
     loading.value = true
 
     try {
       await apiApp.delete(`/requirement/${id}`)
-      successToast('Requerimiento eliminado')
+      if (showMessage) successToast('Requerimiento eliminado')
       return { success: true }
     } catch {
       return { success: false }

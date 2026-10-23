@@ -6,14 +6,15 @@ export interface Toast {
   time?: number
   css?: string
   html?: boolean
+  showClose?: boolean
 }
 
 const toasts: Ref<Toast[]> = ref([])
 
 export function useToast() {
-  const launchToast = ({ msg, time, css = '', html} : Toast) => {    
+  const launchToast = ({ msg, time, css = '', html, showClose = true} : Toast) => {
     const id = crypto.randomUUID()
-    const toast: Toast = { msg, time, css, id, html }    
+    const toast: Toast = { msg, time, css, id, html, showClose }    
     toasts.value.push(toast);
   };
   

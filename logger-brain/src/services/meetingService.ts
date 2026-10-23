@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { meetings, type NewMeeting } from "../db/schemas/meetings.js";
@@ -10,7 +10,7 @@ import { logs } from "../db/schemas/logs.js";
 import { projects } from "../db/schemas/projects.js";
 import { requirements } from "../db/schemas/requirements.js";
 import { tasks } from "../db/schemas/tasks.js";
-import { getProjectById } from "./projectService.js";
+import { assertOwnedProject, getProjectById } from "./projectService.js";
 import { BadRequestError400 } from "../errors/BadRequestError400.js";
 import { NotFoundError404 } from "../errors/NotFoundError404.js";
 import { nextStepTags } from "../utils/objectiveKeywords.js";
@@ -42,7 +42,13 @@ export interface MeetingWriteInput {
     lessons?: string | null;
     executed?: boolean;
     objectiveAchieved?: boolean | null;
+    additionalInfo?: string | null;
+    platform?: string | null;
+    meetingUrl?: string | null;
+    accessDetails?: string | null;
 }
+
+const MEETING_PLATFORMS = new Set(["meet", "zoom", "teams", "whatsapp", "presencial", "otro"]);
 
 export interface MeetingListFilters {
     projectId?: string;
@@ -50,15 +56,6 @@ export interface MeetingListFilters {
     to?: string;
     page?: number;
     limit?: number;
-}
-
-async function assertOwnedProject(projectId: string | null | undefined, userId: number) {
-    if (!projectId) return;
-
-    const project = await getProjectById(projectId);
-    if (!project || project.userId !== userId) {
-        throw new BadRequestError400("Project not found");
-    }
 }
 
 function blankToNull(value: string | null): string | null {
@@ -76,6 +73,24 @@ function qualificationColumns(input: MeetingWriteInput): Partial<NewMeeting> {
     if (input.objectiveAchieved !== undefined) columns.objectiveAchieved = input.objectiveAchieved;
     if (input.objectiveAchieved === true || input.objectiveAchieved === false) {
         columns.executed = true;
+    }
+
+    return columns;
+}
+
+function logisticsColumns(input: MeetingWriteInput): Partial<NewMeeting> {
+    const columns: Partial<NewMeeting> = {};
+
+    if (input.additionalInfo !== undefined) columns.additionalInfo = blankToNull(input.additionalInfo);
+    if (input.meetingUrl !== undefined) columns.meetingUrl = blankToNull(input.meetingUrl);
+    if (input.accessDetails !== undefined) columns.accessDetails = blankToNull(input.accessDetails);
+
+    if (input.platform !== undefined) {
+        const platform = blankToNull(input.platform);
+        if (platform && !MEETING_PLATFORMS.has(platform)) {
+            throw new BadRequestError400("Invalid platform");
+        }
+        columns.platform = platform;
     }
 
     return columns;
@@ -462,7 +477,9 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
     const date = parseMeetingDate(input.date);
     const projectId = input.projectId ?? null;
 
-    await assertOwnedProject(projectId, userId);
+    if (projectId) {
+        await assertOwnedProject(projectId, userId);
+    }
     await assertOwnedCards(input.cardIds ?? [], userId);
     await assertOwnedLogs((input.logLinks ?? []).map((link) => link.logId), userId);
     assertNextSteps(input.nextSteps, projectId);
@@ -484,6 +501,7 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
             participants: input.participants ?? "",
             color: input.color ?? "#f5f5f4",
             ...qualificationColumns(input),
+            ...logisticsColumns(input),
         }).returning();
 
         await syncIssues(created.id, input.issues, client);
@@ -506,7 +524,7 @@ export async function createMeeting(userId: number, input: MeetingWriteInput) {
 export async function updateMeeting(id: string, userId: number, changes: MeetingWriteInput) {
     const current = await getMeetingByIdForUser(id, userId);
 
-    if (changes.projectId !== undefined) {
+    if (changes.projectId) {
         await assertOwnedProject(changes.projectId, userId);
     }
 
@@ -530,7 +548,7 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
     if (changes.participants !== undefined) payload.participants = changes.participants;
     if (changes.color !== undefined) payload.color = changes.color;
     if (changes.projectId !== undefined) payload.projectId = changes.projectId;
-    Object.assign(payload, qualificationColumns(changes));
+    Object.assign(payload, qualificationColumns(changes), logisticsColumns(changes));
 
     await db.transaction(async (tx) => {
         const client = tx as unknown as MeetingDb;
@@ -561,6 +579,129 @@ export async function updateMeeting(id: string, userId: number, changes: Meeting
             objective,
         });
     });
+
+    return getMeetingByIdForUser(id, userId);
+}
+
+function changedRows(result: unknown) {
+    if (Array.isArray(result)) return result.length;
+    if (!result || typeof result !== "object") return 0;
+
+    const rows = "rows" in result ? result.rows : undefined;
+    if (Array.isArray(rows)) return rows.length;
+
+    const rowCount = "rowCount" in result ? result.rowCount : undefined;
+    return typeof rowCount === "number" ? rowCount : 0;
+}
+
+async function commitOpenSegment(id: string, userId: number, finish: boolean) {
+    const result = await db.execute(sql`
+        UPDATE meetings AS m
+        SET
+            duration = coalesce(m.duration, 0) + GREATEST(
+                0,
+                floor(extract(epoch FROM (stamp.at - m.running_since)))::int
+            ),
+            running_since = NULL,
+            finished_at = CASE
+                WHEN ${finish} THEN stamp.at
+                ELSE m.finished_at
+            END,
+            executed = CASE
+                WHEN ${finish} THEN true
+                ELSE m.executed
+            END
+        FROM (SELECT clock_timestamp() AS at) AS stamp
+        WHERE m.id = ${id}::uuid
+          AND m.user_id = ${userId}
+          AND m.running_since IS NOT NULL
+        RETURNING m.id
+    `);
+
+    return changedRows(result) > 0;
+}
+
+function clockNeverStarted(meeting: { startedAt: Date | null; runningSince: Date | null; finishedAt: Date | null; duration: number | null }) {
+    return meeting.startedAt === null
+        && meeting.runningSince === null
+        && meeting.finishedAt === null
+        && meeting.duration === null;
+}
+
+export async function resumeMeetingClock(id: string, userId: number) {
+    await getMeetingByIdForUser(id, userId);
+
+    const result = await db.execute(sql`
+        UPDATE meetings AS m
+        SET
+            started_at = coalesce(m.started_at, stamp.at),
+            running_since = stamp.at,
+            finished_at = NULL
+        FROM (SELECT clock_timestamp() AS at) AS stamp
+        WHERE m.id = ${id}::uuid
+          AND m.user_id = ${userId}
+          AND m.running_since IS NULL
+          AND (
+            m.executed = false
+            OR m.started_at IS NOT NULL
+            OR m.duration IS NOT NULL
+            OR m.finished_at IS NOT NULL
+          )
+        RETURNING m.id
+    `);
+
+    if (changedRows(result) === 0) {
+        const again = await getMeetingByIdForUser(id, userId);
+        if (again.executed && clockNeverStarted(again)) {
+            throw new BadRequestError400("Meeting clock has not started");
+        }
+        if (again.runningSince) {
+            throw new BadRequestError400("Meeting clock is already running");
+        }
+        throw new NotFoundError404("Meeting not found");
+    }
+
+    return getMeetingByIdForUser(id, userId);
+}
+
+export async function pauseMeetingClock(id: string, userId: number) {
+    await getMeetingByIdForUser(id, userId);
+    await commitOpenSegment(id, userId, false);
+    return getMeetingByIdForUser(id, userId);
+}
+
+export async function finishMeetingClock(id: string, userId: number) {
+    const current = await getMeetingByIdForUser(id, userId);
+
+    if (current.runningSince) {
+        const committed = await commitOpenSegment(id, userId, true);
+        if (committed) return getMeetingByIdForUser(id, userId);
+    }
+
+    const latest = await getMeetingByIdForUser(id, userId);
+
+    if (latest.runningSince) {
+        await commitOpenSegment(id, userId, true);
+        return getMeetingByIdForUser(id, userId);
+    }
+
+    if (clockNeverStarted(latest)) {
+        throw new BadRequestError400("Meeting clock has not started");
+    }
+
+    if (latest.finishedAt) return latest;
+
+    await db.execute(sql`
+        UPDATE meetings
+        SET finished_at = clock_timestamp(),
+            executed = true
+        WHERE id = ${id}::uuid
+          AND user_id = ${userId}
+          AND running_since IS NULL
+          AND finished_at IS NULL
+          AND (started_at IS NOT NULL OR duration IS NOT NULL)
+        RETURNING id
+    `);
 
     return getMeetingByIdForUser(id, userId);
 }

@@ -112,3 +112,14 @@ name varchar
 description text
 completed boolean
 timestamps
+-------
+ACTION_TEMPLATES
+id int pk
+card_id uuid nullable
+module varchar #values:log, meeting, requeriments, taks, all
+name varchar
+action text nullable
+template text
+color
+is_active boolean 
+timestamps

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 
 import ConfirmModal from '@/commons/ConfirmModal.vue'
@@ -8,6 +8,7 @@ import MeetingRunClose from '@/components/Meeting/MeetingRunClose.vue'
 import MeetingRunContext from '@/components/Meeting/MeetingRunContext.vue'
 import MeetingRunDevelopment from '@/components/Meeting/MeetingRunDevelopment.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import { keyboardCommands } from '@/composables/useKeyboardCommands'
 import { useMeeting } from '@/composables/useMeeting'
 import { useMeetingClock } from '@/composables/useMeetingClock'
 import type { Meeting, MeetingIssue, MeetingNextStep } from '@/interfaces/meeting'
@@ -17,8 +18,13 @@ type Act = 'context' | 'development' | 'close'
 
 const route = useRoute()
 const router = useRouter()
-const { getMeetingById, patchMeeting, finishMeeting, loading } = useMeeting()
-const clock = useMeetingClock()
+const {
+  getMeetingById,
+  patchMeeting,
+  resumeMeetingClock,
+  pauseMeetingClock,
+  finishMeetingClock,
+} = useMeeting()
 
 const meeting = ref<Meeting | null>(null)
 const notFound = ref(false)
@@ -26,17 +32,27 @@ const act = ref<Act>('context')
 const openIssue = ref<MeetingIssue | null>(null)
 const additionalInfo = ref('')
 const finishOpen = ref(false)
-const finishing = ref(false)
+const clockBusy = ref(false)
+
+const clock = useMeetingClock()
 
 const meetingId = computed(() => {
   const id = route.params.id
   return typeof id === 'string' ? id : ''
 })
 
-const frozen = computed(() => {
-  if (!meeting.value) return true
-  return meeting.value.executed || meeting.value.duration !== null
+const clockFinished = computed(() => Boolean(meeting.value?.finishedAt))
+const segmentOpen = computed(() => Boolean(meeting.value?.runningSince) && !clockFinished.value)
+const clockStarted = computed(() => {
+  if (!meeting.value) return false
+  return meeting.value.startedAt != null
+    || meeting.value.duration != null
+    || meeting.value.finishedAt != null
 })
+const showStart = computed(() => !meeting.value?.executed && !segmentOpen.value && !clockStarted.value)
+const showResume = computed(() => !segmentOpen.value && clockStarted.value)
+const showPause = computed(() => segmentOpen.value)
+const showFinish = computed(() => !clockFinished.value && clockStarted.value)
 
 const canPrev = computed(() => act.value !== 'context')
 const canNext = computed(() => act.value !== 'close')
@@ -48,11 +64,13 @@ const loadMeeting = async (id: string) => {
     return
   }
 
+  if (meetingId.value !== id) return
+
   meeting.value = data
   additionalInfo.value = data.additionalInfo ?? ''
-  clock.open(data.id, {
-    frozen: data.executed || data.duration !== null,
+  clock.apply({
     duration: data.duration,
+    runningSince: data.finishedAt ? null : data.runningSince,
   })
 }
 
@@ -70,6 +88,7 @@ void load()
 onBeforeRouteUpdate((to) => {
   const id = typeof to.params.id === 'string' ? to.params.id : ''
   if (!id || id === meeting.value?.id) return
+  clock.stop()
   meeting.value = null
   notFound.value = false
   act.value = 'context'
@@ -108,6 +127,18 @@ const goPrev = () => {
   }
 }
 
+onMounted(() => {
+  keyboardCommands.setRoomActArrows({
+    prev: goPrev,
+    next: goNext,
+    enabled: () => Boolean(meeting.value) && !finishOpen.value,
+  })
+})
+
+onUnmounted(() => {
+  keyboardCommands.setRoomActArrows(null)
+})
+
 const commitAdditionalInfo = async () => {
   if (!meeting.value) return
 
@@ -122,30 +153,42 @@ const commitAdditionalInfo = async () => {
 }
 
 const saveNextSteps = async (steps: MeetingNextStep[]) => {
-  if (!meeting.value) return
+  if (!meeting.value) return false
 
   const { success, data } = await patchMeeting(meeting.value.id, { nextSteps: steps })
-  if (!success || !data) return
+  if (!success || !data) return false
 
   meeting.value = data
+  return true
+}
+
+const applyClock = (data: Meeting) => {
+  meeting.value = data
+  clock.apply(data)
+}
+
+const runClockAction = async (action: (id: string) => Promise<{ success: boolean; data?: Meeting }>) => {
+  if (clockBusy.value || !meeting.value) return
+  const id = meeting.value.id
+  clockBusy.value = true
+  const { success, data } = await action(id)
+  clockBusy.value = false
+  if (!success || !data || meeting.value?.id !== id) return
+  applyClock(data)
+}
+
+const handleResume = () => {
+  void runClockAction(resumeMeetingClock)
+}
+
+const handlePause = () => {
+  void runClockAction(pauseMeetingClock)
 }
 
 const handleFinish = async () => {
-  if (finishing.value || !meeting.value || frozen.value) return
-
-  finishing.value = true
+  if (clockBusy.value || !meeting.value || !showFinish.value) return
   finishOpen.value = false
-  const duration = clock.flush()
-  const { success, data } = await finishMeeting(meeting.value.id, duration)
-  finishing.value = false
-
-  if (!success || !data) {
-    clock.resume()
-    return
-  }
-
-  meeting.value = data
-  clock.freeze(data.duration)
+  await runClockAction(finishMeetingClock)
 }
 </script>
 
@@ -154,19 +197,51 @@ const handleFinish = async () => {
   <NotFoundView v-else-if="notFound || !meeting" />
 
   <div v-else class="flex h-dvh min-h-0 flex-col overflow-hidden bg-white text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
-    <header class="flex items-center gap-3 border-b border-black/10 px-3 py-3 dark:border-white/10">
-      <button
-        type="button"
-        class="inline-flex cursor-pointer items-center rounded-md border border-black/10 px-2 py-1 text-xs font-semibold dark:border-white/15"
-        aria-label="Volver a la reunión"
-        @click="goBack"
-      >
-        <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
-      </button>
-      <h1 class="min-w-0 flex-1 truncate text-lg font-semibold">Reunión {{ meeting.title }}</h1>
-      <div class="flex shrink-0 items-center gap-2">
+    <header class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-black/10 px-3 py-3 dark:border-white/10">
+      <div class="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          class="inline-flex cursor-pointer items-center rounded-md border border-black/10 px-2 py-1 text-xs font-semibold dark:border-white/15"
+          aria-label="Volver a la reunión"
+          @click="goBack"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+        </button>
+        <h1 class="min-w-0 flex-1 truncate text-lg font-semibold">Reunión {{ meeting.title }}</h1>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
         <ThemeToggle single />
         <p class="font-mono text-lg tabular-nums" aria-live="polite">{{ clock.label }}</p>
+        <button
+          v-if="showStart || showResume"
+          type="button"
+          class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
+          :disabled="clockBusy"
+          :aria-label="showStart ? 'Iniciar' : 'Reanudar'"
+          @click="handleResume"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1.35rem;">play_arrow</span>
+        </button>
+        <button
+          v-if="showPause"
+          type="button"
+          class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
+          :disabled="clockBusy"
+          aria-label="Pausar"
+          @click="handlePause"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1.35rem;">pause</span>
+        </button>
+        <button
+          v-if="showFinish"
+          type="button"
+          class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
+          :disabled="clockBusy"
+          aria-label="Finalizar"
+          @click="finishOpen = true"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1.35rem;">stop</span>
+        </button>
       </div>
     </header>
 
@@ -198,9 +273,9 @@ const handleFinish = async () => {
           v-else
           v-model:additional-info="additionalInfo"
           :meeting="meeting"
-          :frozen="frozen"
+          :save-steps="saveNextSteps"
+          :can-finish="showFinish"
           @commit="commitAdditionalInfo"
-          @save-steps="saveNextSteps"
           @finish="finishOpen = true"
         />
       </main>
@@ -243,11 +318,11 @@ const handleFinish = async () => {
     <ConfirmModal
       v-model="finishOpen"
       title="¿Finalizar la reunión?"
-      :loading="loading || finishing"
+      :loading="clockBusy"
       @confirm="handleFinish"
     >
       <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-        Se guardará el tiempo que la sala estuvo abierta.
+        Se guarda el tiempo, el reloj se detiene y la reunión queda ejecutada.
       </p>
     </ConfirmModal>
   </div>

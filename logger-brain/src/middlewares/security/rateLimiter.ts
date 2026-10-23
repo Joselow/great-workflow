@@ -22,8 +22,8 @@ const createLimiter = ({ windowMs, max }: { windowMs: number; max: number }) =>
 
 // ========= RATE LIMIT GLOBAL =========
 export const globalLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,   // 15 minutos
-  max: 100,                   // 100 requests por IP en 15 min
+  windowMs: 10 * 60 * 1000,   // 10 minutos
+  max: 300,                   // 300 requests por IP en 10 min
 });
 
 // ========= CREACIÓN DE CUENTAS =========

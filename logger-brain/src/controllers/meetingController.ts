@@ -4,6 +4,15 @@ import * as meetingService from "../services/meetingService.js";
 import { getUserPayload } from "../helpers/authHelpers.js";
 import { simpleSuccess } from "../utils/responses.js";
 
+function logisticsFrom(body: Request["body"]) {
+    return {
+        additionalInfo: body.additionalInfo,
+        platform: body.platform,
+        meetingUrl: body.meetingUrl,
+        accessDetails: body.accessDetails,
+    };
+}
+
 export const createMeeting = async (req: Request, res: Response) => {
     const user = getUserPayload(req);
     const {
@@ -42,6 +51,7 @@ export const createMeeting = async (req: Request, res: Response) => {
         lessons,
         executed,
         objectiveAchieved,
+        ...logisticsFrom(req.body),
     });
 
     return simpleSuccess(res, 201, meeting);
@@ -93,8 +103,30 @@ export const updateMeeting = async (req: Request, res: Response) => {
         lessons,
         executed,
         objectiveAchieved,
+        ...logisticsFrom(req.body),
     });
 
+    return simpleSuccess(res, 200, meeting);
+};
+
+export const resumeMeetingClock = async (req: Request, res: Response) => {
+    const user = getUserPayload(req);
+    const { id } = req.params;
+    const meeting = await meetingService.resumeMeetingClock(id, user.id);
+    return simpleSuccess(res, 200, meeting);
+};
+
+export const pauseMeetingClock = async (req: Request, res: Response) => {
+    const user = getUserPayload(req);
+    const { id } = req.params;
+    const meeting = await meetingService.pauseMeetingClock(id, user.id);
+    return simpleSuccess(res, 200, meeting);
+};
+
+export const finishMeetingClock = async (req: Request, res: Response) => {
+    const user = getUserPayload(req);
+    const { id } = req.params;
+    const meeting = await meetingService.finishMeetingClock(id, user.id);
     return simpleSuccess(res, 200, meeting);
 };
 

@@ -25,6 +25,14 @@ export const meetings = pgTable('meetings', {
   lessons: text('lessons'),
   executed: boolean('executed').notNull().default(false),
   objectiveAchieved: boolean('objective_achieved'),
+  additionalInfo: text('additional_info'),
+  platform: varchar('platform', { length: 30 }),
+  meetingUrl: text('meeting_url'),
+  accessDetails: text('access_details'),
+  duration: integer('duration'),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  runningSince: timestamp('running_since', { withTimezone: true }),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
   ...timestamps,
 });
 

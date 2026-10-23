@@ -34,11 +34,8 @@ const handleRemoveToast = (id?: string) => {
         <li v-for="(toast) in toasts" :key="toast.id" class="py-2 w-auto">
           <ToastItem 
             @remove="handleRemoveToast"
-            :id="toast.id"
-            :css="toast.css"
-            :msg="toast.msg"
-            :time="toast.time"
-            :html="toast.html"
+            v-bind="toast"
+
           /> 
         </li>
       </TransitionGroup >

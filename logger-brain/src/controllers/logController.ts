@@ -39,28 +39,29 @@ export const createLog = async (req: Request, res: Response) => {
 }
 
 export const updateLog = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
+    const user = getUserPayload(req);
+    const { id } = req.params;
     const { projectId, description, responsible, tags, comment, completed } = req.body;
 
-    const log = await logService.updateLog(id, {
-      projectId,
-    description,
-    responsible,
-    tags,
-    comment,
-    completed
-  });
+    const log = await logService.updateLog(id, user.id, {
+        projectId,
+        description,
+        responsible,
+        tags,
+        comment,
+        completed,
+    });
 
-  return simpleSuccess(res, 200, log)
+    return simpleSuccess(res, 200, log);
 }
 
 export const destroyLog = async (req: Request, res: Response) => {
-  const { id } = req.params
+    const user = getUserPayload(req);
+    const { id } = req.params;
 
-  logService.destroyLog(id)
+    await logService.destroyLog(id, user.id);
 
-  return simpleSuccess(res, 200, {
-    message: 'Log successfully deleted',
-  });
+    return simpleSuccess(res, 200, {
+        message: 'Log successfully deleted',
+    });
 }

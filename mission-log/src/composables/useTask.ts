@@ -34,6 +34,7 @@ export function useTask() {
   const createTask = async (
     draft: TaskDraft,
     origin: TaskCreateOrigin = {},
+    showMessage = true,
   ): Promise<ResponseComposables<Task>> => {
     loading.value = true
 
@@ -59,7 +60,7 @@ export function useTask() {
       }
 
       const { data } = await apiApp.post<Task>('/task', body)
-      successToast('Tarea guardada')
+      if (showMessage) successToast('Tarea guardada')
       return { success: true, data }
     } catch {
       return { success: false }
@@ -68,7 +69,7 @@ export function useTask() {
     }
   }
 
-  const updateTask = async (id: string, draft: TaskDraft): Promise<ResponseComposables<Task>> => {
+  const updateTask = async (id: string, draft: TaskDraft, showMessage = true): Promise<ResponseComposables<Task>> => {
     loading.value = true
 
     try {
@@ -78,7 +79,7 @@ export function useTask() {
         completed: draft.completed,
         requirementId: draft.requirementId,
       })
-      successToast('Tarea actualizada')
+      if (showMessage) successToast('Tarea actualizada')
       return { success: true, data }
     } catch {
       return { success: false }
@@ -100,12 +101,12 @@ export function useTask() {
     }
   }
 
-  const deleteTask = async (id: string): Promise<ResponseComposables<null>> => {
+  const deleteTask = async (id: string, showMessage = true): Promise<ResponseComposables<null>> => {
     loading.value = true
 
     try {
       await apiApp.delete(`/task/${id}`)
-      successToast('Tarea eliminada')
+      if (showMessage) successToast('Tarea eliminada')
       return { success: true }
     } catch {
       return { success: false }

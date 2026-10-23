@@ -3,6 +3,16 @@ import { asc, and, eq, gte, isNull, lt, or } from "drizzle-orm";
 import { db } from '../db/index.js';
 import { logs, NewLog } from "../db/schemas/logs";
 import { assertOwnedProject } from "./projectService.js";
+import { NotFoundError404 } from "../errors/NotFoundError404.js";
+
+interface LogUpdateInput {
+    projectId?: string
+    description?: string
+    responsible?: string
+    tags?: string
+    comment?: string | null
+    completed?: boolean | null
+}
 
 interface LogListFilters {
     projectId?: string
@@ -46,14 +56,54 @@ export async function createLog(newLog: NewLog) {
   return log
 }
 
-export async function updateLog(id: string, changes: Partial<NewLog>) {
-    const [log] = await db.update(logs).set(changes).where(eq(logs.id, id)).returning();
-    return log
+async function getOwnedLog(id: string, userId: number) {
+    const [log] = await db.select().from(logs)
+        .where(and(eq(logs.id, id), eq(logs.userId, userId)));
+
+    if (!log) {
+        throw new NotFoundError404('Log not found');
+    }
+
+    return log;
 }
 
-  
-export async function destroyLog(id: string) {
-  const [deleted] = await db.delete(logs).where(eq(logs.id, id)).returning();  
-  return deleted;
+export async function updateLog(id: string, userId: number, changes: LogUpdateInput) {
+    await getOwnedLog(id, userId);
+
+    if (changes.projectId !== undefined) {
+        await assertOwnedProject(changes.projectId, userId);
+    }
+
+    const payload: Partial<NewLog> = {};
+
+    if (changes.projectId !== undefined) payload.projectId = changes.projectId;
+    if (changes.description !== undefined) payload.description = changes.description;
+    if (changes.responsible !== undefined) payload.responsible = changes.responsible;
+    if (changes.tags !== undefined) payload.tags = changes.tags;
+    if (changes.comment !== undefined) payload.comment = changes.comment;
+    if (changes.completed !== undefined) payload.completed = changes.completed;
+
+    const [log] = await db.update(logs)
+        .set(payload)
+        .where(and(eq(logs.id, id), eq(logs.userId, userId)))
+        .returning();
+
+    if (!log) {
+        throw new NotFoundError404('Log not found');
+    }
+
+    return log;
+}
+
+export async function destroyLog(id: string, userId: number) {
+    const [deleted] = await db.delete(logs)
+        .where(and(eq(logs.id, id), eq(logs.userId, userId)))
+        .returning();
+
+    if (!deleted) {
+        throw new NotFoundError404('Log not found');
+    }
+
+    return deleted;
 }
   

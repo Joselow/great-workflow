@@ -14,7 +14,7 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="flex select-text items-center justify-between rounded-xl border-2 px-3 py-2 text-sm"
+    class="flex select-text items-center justify-between rounded-xl border-2 px-4 py-2 text-sm"
     :style="{ borderColor: issue.color, color: issue.color }"
     @dblclick="interactive && emit('open')"
   >
