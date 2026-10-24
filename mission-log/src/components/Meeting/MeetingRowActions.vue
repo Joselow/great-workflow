@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
-
+import { nextTick, onBeforeUnmount, ref } from 'vue'
 
 const root = ref<HTMLElement | null>(null)
+const menuEl = ref<HTMLElement | null>(null)
 const menuOpen = ref(false)
-const menuStyle = ref({ top: '0px', left: '0px' })
+const menuStyle = ref<Record<string, string>>({ top: '0px', left: '0px' })
 
 const closeMenu = () => {
   menuOpen.value = false
@@ -17,23 +17,52 @@ const onPointerDown = (event: PointerEvent) => {
   closeMenu()
 }
 
-const openMenu = (event: MouseEvent) => {
+const placeMenu = (button: HTMLElement) => {
+  const menu = menuEl.value
+  if (!menu) return
+
+  const rect = button.getBoundingClientRect()
+  const margin = 8
+  const gap = 4
+  const maxHeight = 240
+  const minWidth = 144
+  const maxWidth = 288
+
+  const width = Math.min(Math.max(menu.offsetWidth, minWidth), maxWidth, window.innerWidth - margin * 2)
+  const fullHeight = menu.scrollHeight
+  const below = window.innerHeight - rect.bottom - margin
+  const above = rect.top - margin
+  const needed = Math.min(fullHeight, maxHeight)
+  const openUp = below < needed + gap && above > below
+  const space = Math.max(openUp ? above - gap : below - gap, 40)
+  const height = Math.min(needed, space)
+  const left = Math.min(Math.max(margin, rect.right - width), window.innerWidth - width - margin)
+  const top = openUp ? rect.top - height - gap : rect.bottom + gap
+
+  menuStyle.value = {
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${width}px`,
+    maxHeight: `${height}px`,
+  }
+}
+
+const openMenu = async (event: MouseEvent) => {
   const button = event.currentTarget
   if (!(button instanceof HTMLElement)) return
 
   const rect = button.getBoundingClientRect()
-  const menuWidth = 148
-  const menuHeight = 40
-  const left = Math.min(
-    Math.max(8, rect.right - menuWidth),
-    window.innerWidth - menuWidth - 8,
-  )
-  const openUp = window.innerHeight - rect.bottom < menuHeight + 12
-  const top = openUp ? rect.top - menuHeight - 4 : rect.bottom + 4
-
-  menuStyle.value = { top: `${top}px`, left: `${left}px` }
+  menuStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${Math.max(8, rect.right - 144)}px`,
+    width: 'max-content',
+    maxWidth: '288px',
+    maxHeight: 'none',
+  }
   menuOpen.value = true
   document.addEventListener('pointerdown', onPointerDown)
+  await nextTick()
+  placeMenu(button)
 }
 
 const toggleMenu = (event: MouseEvent) => {
@@ -41,9 +70,9 @@ const toggleMenu = (event: MouseEvent) => {
     closeMenu()
     return
   }
-  openMenu(event)
-}
 
+  void openMenu(event)
+}
 
 onBeforeUnmount(closeMenu)
 </script>
@@ -52,6 +81,7 @@ onBeforeUnmount(closeMenu)
   <div
     ref="root"
     @click.stop
+    @dblclick.stop
   >
     <button
       type="button"
@@ -66,11 +96,13 @@ onBeforeUnmount(closeMenu)
 
     <div
       v-if="menuOpen"
-      class="fixed z-30 w-36 rounded-lg border border-black/10 bg-white py-1 dark:border-white/15 dark:bg-neutral-900"
+      ref="menuEl"
+      class="pretty-scroll fixed z-30 overflow-y-auto rounded-lg border border-black/10 bg-white py-1 shadow-lg dark:border-white/15 dark:bg-neutral-900"
       :style="menuStyle"
       role="menu"
+      @click="closeMenu"
     >
-     <slot />
+      <slot />
     </div>
   </div>
 </template>

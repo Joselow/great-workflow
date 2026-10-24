@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import ActionTemplateMenu from '@/components/ActionTemplate/ActionTemplateMenu.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import EmptyRecords from '@/commons/EmptyRecords.vue'
+import { requirementEntityContent } from '@/helpers/requirementContent'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import type { Requirement } from '@/interfaces/requirement'
 
 withDefaults(defineProps<{
@@ -11,10 +14,12 @@ withDefaults(defineProps<{
   selectedId?: string | null
   pending?: boolean
   emptyMessage?: string
+  templates?: ActionTemplate[]
 }>(), {
   selectedId: null,
   pending: false,
   emptyMessage: 'Aún no hay requerimientos',
+  templates: () => [],
 })
 
 const emit = defineEmits<{
@@ -77,6 +82,11 @@ const confirmDelete = () => {
           >checklist_rtl</span>
           Tareas
         </button>
+
+        <ActionTemplateMenu
+          :templates="templates"
+          :entity="requirementEntityContent(requirement)"
+        />
 
         <button
           type="button"

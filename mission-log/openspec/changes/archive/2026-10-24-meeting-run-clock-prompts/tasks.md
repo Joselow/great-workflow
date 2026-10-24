@@ -1,0 +1,11 @@
+## 1. Start question
+
+- [x] 1.1 In `MeetingRunView`, gate the first context → development move while **Iniciar** would show. Ask with the existing confirm modal, keep the context act until the answer, and remember the answer only on that view instance. Confirm calls the same resume as **Iniciar** and then shows development. Cancel shows development without resume. Later moves in that visit do not ask. Reset the memory when the meeting id changes. Disable the act arrows while the question is open. Verify: a never-started meeting asks only on the first next, confirm starts the clock and lands on development, cancel lands on development with the clock at zero and a second next does not ask, leaving the room and entering again asks on the next context move, an already-started meeting does not ask, and staying on context does not ask.
+
+## 2. Finish stops the open segment
+
+- [x] 2.1 When **Finalizar** is pressed with a segment open, freeze the readout and pause before showing the confirmation. If pause fails, do not open the confirmation and keep the readout advancing. Confirm calls finish and does not resume. Cancel after that pause calls resume and the readout continues from the paused duration. Cancel when the clock was already paused does not resume. While the confirmation is open, the other clock controls do not send a request. If the owner leaves the room during that confirmation, resume first. Verify: a running clock stops when **Finalizar** opens, confirm stores the finish without adding the time the modal was open, cancel continues from the frozen second, a paused clock stays paused on cancel, a failed pause leaves the clock running with no modal, and leaving the room from the open confirmation leaves the clock running.
+
+## 3. Additional info height
+
+- [x] 3.1 Make the additional-info textarea in `MeetingRunDevelopment` and `MeetingRunClose` grow and shrink to its text, with a three-line minimum, no manual resize, and no inner scrollbar. Fit again when the stored text is painted. Leave the planning-form textarea unchanged. Verify: typing past three lines grows the close-act field and the act column scrolls, deleting back to one line shrinks it to the minimum, and opening an issue with long additional info shows that text at the grown height.

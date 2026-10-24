@@ -43,6 +43,24 @@ export function useMeetingClock() {
     seconds.value = closed
   }
 
+  const hold = () => {
+    publish()
+    window.clearInterval(timer)
+    timer = 0
+    running.value = false
+  }
+
+  const release = () => {
+    if (runningSinceMs === null) {
+      publish()
+      return
+    }
+
+    publish()
+    window.clearInterval(timer)
+    timer = window.setInterval(publish, 1000)
+  }
+
   const apply = (snapshot: ClockSnapshot) => {
     closed = snapshot.duration ?? 0
     const parsed = snapshot.runningSince ? Date.parse(snapshot.runningSince) : Number.NaN
@@ -64,5 +82,7 @@ export function useMeetingClock() {
     running,
     apply,
     stop,
+    hold,
+    release,
   }
 }

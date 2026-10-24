@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MeetingRowActions from './MeetingRowActions.vue'
+import ActionTemplateButton from '@/components/ActionTemplate/ActionTemplateButton.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
+import { useMeeting } from '@/composables/useMeeting'
+import { applyActionTemplate } from '@/helpers/applyActionTemplate'
+import { generateMeetingSummary } from '@/helpers/meetingSummary'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import type { MeetingListItem } from '@/interfaces/meeting'
 
-defineProps<{
+withDefaults(defineProps<{
   meetings: MeetingListItem[]
   emptyLabel: string
-}>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const emit = defineEmits<{
   open: [meeting: MeetingListItem]
@@ -28,8 +36,33 @@ const formatDate = (value: string) => {
   })
 }
 
+const { getMeetingById } = useMeeting()
 const confirmOpen = ref(false)
 const pendingDelete = ref<MeetingListItem | null>(null)
+const applyingId = ref<string | null>(null)
+
+const applyMeetingTemplate = async (meeting: MeetingListItem, template: ActionTemplate) => {
+  if (applyingId.value) return
+  applyingId.value = meeting.id
+
+  const { success, data } = await getMeetingById(meeting.id)
+  applyingId.value = null
+  if (!success || !data) return
+
+  const entity = generateMeetingSummary({
+    title: data.title,
+    projectName: meeting.project?.name ?? '',
+    date: data.date,
+    estimatedDuration: data.estimatedDuration,
+    topicStatus: data.topicStatus,
+    objective: data.objective,
+    issues: data.issues,
+    participants: data.participants,
+    nextSteps: data.logs.filter((log) => log.source === 'meeting'),
+  })
+
+  await applyActionTemplate(template, entity)
+}
 
 const askDelete = (meeting: MeetingListItem) => {
   pendingDelete.value = meeting
@@ -129,9 +162,15 @@ const confirmDelete = () => {
   
               <MeetingRowActions
                 class="text-right">
+                <ActionTemplateButton
+                  v-for="template in templates"
+                  :key="template.id"
+                  :template="template"
+                  @click="applyMeetingTemplate(meeting, template)"
+                />
                 <button
                   type="button"
-                  class="w-full cursor-pointer px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                  class="w-full cursor-pointer break-words px-3 py-1.5 text-left text-xs font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400"
                   role="menuitem"
                   @click="askDelete(meeting)"
                 >

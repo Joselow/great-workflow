@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import CommonLoader from '@/commons/CommonLoader.vue'
 import RequirementForm from '@/components/Requirement/RequirementForm.vue'
 import RequirementList from '@/components/Requirement/RequirementList.vue'
 import RequirementTasksModal from '@/components/Requirement/RequirementTasksModal.vue'
 
+import { useActionTemplate } from '@/composables/useActionTemplate'
 import { useRequirement } from '@/composables/useRequirement'
+import { templatesForModule } from '@/helpers/actionTemplateText'
 import { projectStore } from '@/store/projectStore'
 
 import type { Requirement, RequirementDraft } from '@/interfaces/requirement'
@@ -20,6 +22,11 @@ const {
   updateRequirement,
   deleteRequirement,
 } = useRequirement()
+
+const { templates, getActionTemplates } = useActionTemplate()
+const requirementTemplates = computed(() => templatesForModule(templates.value, 'requirement'))
+const taskTemplates = computed(() => templatesForModule(templates.value, 'task'))
+void getActionTemplates()
 
 const draft = ref<RequirementDraft>({ name: '' })
 const selectedId = ref<string | null>(null)
@@ -122,6 +129,7 @@ const onDeleteRequirement = async (requirement: Requirement) => {
 
         <RequirementList
           :requirements="requirements"
+          :templates="requirementTemplates"
           :selected-id="selectedId"
           :pending="loading"
           empty-message="Aún no hay requerimientos"
@@ -134,6 +142,7 @@ const onDeleteRequirement = async (requirement: Requirement) => {
           :model-value="tasksOpen"
           :requirement="taskRequirement"
           :project-id="activeProject.id"
+          :templates="taskTemplates"
           @update:model-value="onTasksOpen"
         />
       </template>

@@ -2,12 +2,16 @@
 import LogItem from './LogItem.vue'
 import EmptyRecords from '@commons/EmptyRecords.vue'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate';
 import type { Log } from '@/interfaces/Log';
 
 
-const props = defineProps<{
+withDefaults(defineProps<{
   logs: Log[]
-}>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const emits = defineEmits<{
   delete: [log: Log]
@@ -25,6 +29,7 @@ const emits = defineEmits<{
             v-for="log in logs"
               :key="log.id"
               :log="log"
+              :templates="templates"
               @delete="emits('delete', $event)"
           />
         </template>

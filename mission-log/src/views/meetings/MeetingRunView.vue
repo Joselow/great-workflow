@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import Loader from '@/commons/Loader.vue'
@@ -32,7 +32,13 @@ const act = ref<Act>('context')
 const openIssue = ref<MeetingIssue | null>(null)
 const additionalInfo = ref('')
 const finishOpen = ref(false)
+const startOpen = ref(false)
+const startAsked = ref(false)
+const pausedForFinish = ref(false)
 const clockBusy = ref(false)
+let startConfirmed = false
+let ignoreStartClose = false
+let disposed = false
 
 const clock = useMeetingClock()
 
@@ -85,16 +91,36 @@ const load = () => {
 
 void load()
 
-onBeforeRouteUpdate((to) => {
+onBeforeRouteUpdate(async (to) => {
   const id = typeof to.params.id === 'string' ? to.params.id : ''
   if (!id || id === meeting.value?.id) return
+
+  const previousId = meeting.value?.id
+  const held = pausedForFinish.value
+  pausedForFinish.value = false
+  finishOpen.value = false
+  ignoreStartClose = true
+  startOpen.value = false
+  startAsked.value = false
   clock.stop()
   meeting.value = null
   notFound.value = false
   act.value = 'context'
   openIssue.value = null
   additionalInfo.value = ''
+  if (held && previousId) await resumeMeetingClock(previousId)
+  void nextTick(() => {
+    ignoreStartClose = false
+  })
   void loadMeeting(id)
+})
+
+onBeforeRouteLeave(async () => {
+  const id = meeting.value?.id
+  const held = pausedForFinish.value
+  pausedForFinish.value = false
+  finishOpen.value = false
+  if (held && id) await resumeMeetingClock(id)
 })
 
 const goBack = () => {
@@ -103,7 +129,15 @@ const goBack = () => {
 }
 
 const goNext = () => {
+  if (startOpen.value || finishOpen.value) return
+
   if (act.value === 'context') {
+    if (showStart.value && !startAsked.value) {
+      startAsked.value = true
+      startOpen.value = true
+      return
+    }
+
     act.value = 'development'
     return
   }
@@ -115,6 +149,8 @@ const goNext = () => {
 }
 
 const goPrev = () => {
+  if (startOpen.value || finishOpen.value) return
+
   if (act.value === 'close') {
     openIssue.value = null
     act.value = 'development'
@@ -127,15 +163,32 @@ const goPrev = () => {
   }
 }
 
+const confirmStart = async () => {
+  if (clockBusy.value || startConfirmed) return
+  startConfirmed = true
+  await runClockAction(resumeMeetingClock)
+  act.value = 'development'
+  startOpen.value = false
+  void nextTick(() => {
+    startConfirmed = false
+  })
+}
+
+watch(startOpen, (open) => {
+  if (open || startConfirmed || ignoreStartClose || act.value !== 'context') return
+  act.value = 'development'
+})
+
 onMounted(() => {
   keyboardCommands.setRoomActArrows({
     prev: goPrev,
     next: goNext,
-    enabled: () => Boolean(meeting.value) && !finishOpen.value,
+    enabled: () => Boolean(meeting.value) && !finishOpen.value && !startOpen.value,
   })
 })
 
 onUnmounted(() => {
+  disposed = true
   keyboardCommands.setRoomActArrows(null)
 })
 
@@ -168,28 +221,69 @@ const applyClock = (data: Meeting) => {
 }
 
 const runClockAction = async (action: (id: string) => Promise<{ success: boolean; data?: Meeting }>) => {
-  if (clockBusy.value || !meeting.value) return
+  if (clockBusy.value || !meeting.value) return false
   const id = meeting.value.id
   clockBusy.value = true
   const { success, data } = await action(id)
   clockBusy.value = false
-  if (!success || !data || meeting.value?.id !== id) return
+  if (!success || !data || meeting.value?.id !== id) return false
   applyClock(data)
+  return true
 }
 
+const clockLocked = () => clockBusy.value || finishOpen.value || startOpen.value
+
 const handleResume = () => {
+  if (clockLocked()) return
   void runClockAction(resumeMeetingClock)
 }
 
 const handlePause = () => {
+  if (clockLocked()) return
   void runClockAction(pauseMeetingClock)
+}
+
+const openFinish = async () => {
+  if (clockLocked() || !meeting.value || !showFinish.value) return
+
+  const id = meeting.value.id
+  if (!segmentOpen.value) {
+    finishOpen.value = true
+    return
+  }
+
+  clock.hold()
+  clockBusy.value = true
+  const { success, data } = await pauseMeetingClock(id)
+  clockBusy.value = false
+
+  if (disposed || meeting.value?.id !== id) {
+    if (success) await resumeMeetingClock(id)
+    return
+  }
+
+  if (!success || !data) {
+    clock.release()
+    return
+  }
+
+  applyClock(data)
+  pausedForFinish.value = true
+  finishOpen.value = true
 }
 
 const handleFinish = async () => {
   if (clockBusy.value || !meeting.value || !showFinish.value) return
+  pausedForFinish.value = false
   finishOpen.value = false
   await runClockAction(finishMeetingClock)
 }
+
+watch(finishOpen, (open) => {
+  if (open || !pausedForFinish.value || !meeting.value) return
+  pausedForFinish.value = false
+  void runClockAction(resumeMeetingClock)
+})
 </script>
 
 <template>
@@ -216,7 +310,7 @@ const handleFinish = async () => {
           v-if="showStart || showResume"
           type="button"
           class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
-          :disabled="clockBusy"
+          :disabled="clockBusy || finishOpen || startOpen"
           :aria-label="showStart ? 'Iniciar' : 'Reanudar'"
           @click="handleResume"
         >
@@ -226,7 +320,7 @@ const handleFinish = async () => {
           v-if="showPause"
           type="button"
           class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
-          :disabled="clockBusy"
+          :disabled="clockBusy || finishOpen || startOpen"
           aria-label="Pausar"
           @click="handlePause"
         >
@@ -236,9 +330,9 @@ const handleFinish = async () => {
           v-if="showFinish"
           type="button"
           class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-black/10 disabled:cursor-default disabled:opacity-40 dark:border-white/15"
-          :disabled="clockBusy"
+          :disabled="clockBusy || finishOpen || startOpen"
           aria-label="Finalizar"
-          @click="finishOpen = true"
+          @click="openFinish"
         >
           <span class="material-symbols-outlined" style="font-size: 1.35rem;">stop</span>
         </button>
@@ -276,7 +370,7 @@ const handleFinish = async () => {
           :save-steps="saveNextSteps"
           :can-finish="showFinish"
           @commit="commitAdditionalInfo"
-          @finish="finishOpen = true"
+          @finish="openFinish"
         />
       </main>
 
@@ -316,13 +410,26 @@ const handleFinish = async () => {
     </div>
 
     <ConfirmModal
+      v-model="startOpen"
+      title="¿Iniciar la reunión?"
+      :loading="clockBusy"
+      @confirm="confirmStart"
+    >
+      <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+        Confirmar empieza el contador. Cancelar sigue sin iniciarlo.
+      </p>
+    </ConfirmModal>
+
+    <ConfirmModal
       v-model="finishOpen"
       title="¿Finalizar la reunión?"
       :loading="clockBusy"
       @confirm="handleFinish"
     >
       <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-        Se guarda el tiempo, el reloj se detiene y la reunión queda ejecutada.
+        {{ pausedForFinish
+          ? 'El tiempo ya está detenido. Confirmar deja la reunión ejecutada. Cancelar continúa el contador.'
+          : 'Se guarda el tiempo y la reunión queda ejecutada.' }}
       </p>
     </ConfirmModal>
   </div>

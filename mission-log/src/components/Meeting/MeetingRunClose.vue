@@ -4,6 +4,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import MeetingRunNotebook from '@/components/Meeting/MeetingRunNotebook.vue'
 
 import { errorToast } from '@/composables/useAlerts'
+import { useAutosizeTextarea } from '@/composables/useAutosizeTextarea'
 import { markersToHtml } from '@/helpers/richText'
 import type { Meeting, MeetingNextStep } from '@/interfaces/meeting'
 
@@ -14,6 +15,7 @@ const props = defineProps<{
 }>()
 
 const additionalInfo = defineModel<string>('additionalInfo', { required: true })
+const { bind: bindInfo, onInput: fitInfo } = useAutosizeTextarea(additionalInfo)
 
 const emit = defineEmits<{
   commit: []
@@ -140,9 +142,11 @@ watch(nextSteps, () => {
     <label class="mt-8 block text-sm font-semibold">
       Información adicional
       <textarea
+        :ref="bindInfo"
         v-model="additionalInfo"
         rows="3"
-        class="mt-2 w-full rounded-md border border-black/15 bg-white px-2 py-1.5 text-sm outline-none transition-colors hover:border-gray-500 focus:border-gray-900 focus:ring-1 focus:ring-gray-400 dark:border-white/20 dark:bg-zinc-900 dark:hover:border-white/40 dark:focus:border-white"
+        class="mt-2 w-full resize-none overflow-hidden rounded-md border border-black/15 bg-white px-2 py-1.5 text-sm outline-none transition-colors hover:border-gray-500 focus:border-gray-900 focus:ring-1 focus:ring-gray-400 dark:border-white/20 dark:bg-zinc-900 dark:hover:border-white/40 dark:focus:border-white"
+        @input="fitInfo"
         @blur="emit('commit')"
       />
     </label>

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { meetings, type NewMeeting } from "../db/schemas/meetings.js";
@@ -457,15 +457,19 @@ async function withLinks<T extends { id: string }>(meeting: T) {
     };
 }
 
-export async function getMeetingByIdForUser(id: string, userId: number) {
-    const [meeting] = await db.select().from(meetings)
+async function getOwnedMeetingRow(id: string, userId: number, client: MeetingDb = db) {
+    const [meeting] = await client.select().from(meetings)
         .where(and(eq(meetings.id, id), eq(meetings.userId, userId)));
 
     if (!meeting) {
         throw new NotFoundError404("Meeting not found");
     }
 
-    return withLinks(meeting);
+    return meeting;
+}
+
+export async function getMeetingByIdForUser(id: string, userId: number) {
+    return withLinks(await getOwnedMeetingRow(id, userId));
 }
 
 export async function createMeeting(userId: number, input: MeetingWriteInput) {
@@ -594,8 +598,8 @@ function changedRows(result: unknown) {
     return typeof rowCount === "number" ? rowCount : 0;
 }
 
-async function commitOpenSegment(id: string, userId: number, finish: boolean) {
-    const result = await db.execute(sql`
+async function commitOpenSegment(id: string, userId: number, finish: boolean, client: MeetingDb = db) {
+    const result = await client.execute(sql`
         UPDATE meetings AS m
         SET
             duration = coalesce(m.duration, 0) + GREATEST(
@@ -671,61 +675,87 @@ export async function pauseMeetingClock(id: string, userId: number) {
 }
 
 export async function finishMeetingClock(id: string, userId: number) {
-    const current = await getMeetingByIdForUser(id, userId);
+    const meeting = await db.transaction(async (tx) => {
+        const client = tx as unknown as MeetingDb;
+        let current = await getOwnedMeetingRow(id, userId, client);
 
-    if (current.runningSince) {
-        const committed = await commitOpenSegment(id, userId, true);
-        if (committed) return getMeetingByIdForUser(id, userId);
-    }
+        if (current.runningSince) {
+            const committed = await commitOpenSegment(id, userId, true, client);
+            if (committed) return getOwnedMeetingRow(id, userId, client);
+        }
 
-    const latest = await getMeetingByIdForUser(id, userId);
+        current = await getOwnedMeetingRow(id, userId, client);
 
-    if (latest.runningSince) {
-        await commitOpenSegment(id, userId, true);
-        return getMeetingByIdForUser(id, userId);
-    }
+        if (current.runningSince) {
+            await commitOpenSegment(id, userId, true, client);
+            return getOwnedMeetingRow(id, userId, client);
+        }
 
-    if (clockNeverStarted(latest)) {
-        throw new BadRequestError400("Meeting clock has not started");
-    }
+        if (clockNeverStarted(current)) {
+            throw new BadRequestError400("Meeting clock has not started");
+        }
 
-    if (latest.finishedAt) return latest;
+        if (current.finishedAt) return current;
 
-    await db.execute(sql`
-        UPDATE meetings
-        SET finished_at = clock_timestamp(),
-            executed = true
-        WHERE id = ${id}::uuid
-          AND user_id = ${userId}
-          AND running_since IS NULL
-          AND finished_at IS NULL
-          AND (started_at IS NOT NULL OR duration IS NOT NULL)
-        RETURNING id
-    `);
+        await client.execute(sql`
+            UPDATE meetings
+            SET finished_at = clock_timestamp(),
+                executed = true
+            WHERE id = ${id}::uuid
+              AND user_id = ${userId}
+              AND running_since IS NULL
+              AND finished_at IS NULL
+              AND (started_at IS NOT NULL OR duration IS NOT NULL)
+            RETURNING id
+        `);
 
-    return getMeetingByIdForUser(id, userId);
+        return getOwnedMeetingRow(id, userId, client);
+    });
+
+    return withLinks(meeting);
 }
 
 export async function deleteMeeting(id: string, userId: number) {
-    await getMeetingByIdForUser(id, userId);
+    return db.transaction(async (tx) => {
+        const client = tx as unknown as MeetingDb;
+        await getOwnedMeetingRow(id, userId, client);
 
-    await db.update(requirements)
-        .set({ meetingId: null })
-        .where(and(eq(requirements.meetingId, id), eq(requirements.userId, userId)));
+        const requirementRows = await client.select({ id: requirements.id }).from(requirements)
+            .where(and(eq(requirements.meetingId, id), eq(requirements.userId, userId)));
+        const requirementIds = requirementRows.map((row) => row.id);
 
-    await db.update(tasks)
-        .set({ meetingId: null })
-        .where(and(eq(tasks.meetingId, id), eq(tasks.userId, userId)));
+        const linkRows = await client.select({
+            logId: logMeetings.logId,
+            source: logMeetings.source,
+        }).from(logMeetings).where(eq(logMeetings.meetingId, id));
 
-    await db.delete(issues).where(eq(issues.meetingId, id));
-    await db.delete(cardMeetings).where(eq(cardMeetings.meetingId, id));
-    await db.delete(logMeetings).where(eq(logMeetings.meetingId, id));
+        const meetingLogIds = uniqueIds(
+            linkRows.filter((row) => row.source === "meeting").map((row) => row.logId),
+        );
 
-    const [meeting] = await db.delete(meetings)
-        .where(and(eq(meetings.id, id), eq(meetings.userId, userId)))
-        .returning();
+        const taskMatch = requirementIds.length
+            ? or(eq(tasks.meetingId, id), inArray(tasks.requirementId, requirementIds))
+            : eq(tasks.meetingId, id);
 
-    return meeting;
+        await client.delete(tasks).where(and(eq(tasks.userId, userId), taskMatch));
+        await client.delete(requirements)
+            .where(and(eq(requirements.meetingId, id), eq(requirements.userId, userId)));
+        await client.delete(issues).where(eq(issues.meetingId, id));
+        await client.delete(logMeetings).where(eq(logMeetings.meetingId, id));
+
+        if (meetingLogIds.length) {
+            await client.delete(logMeetings).where(inArray(logMeetings.logId, meetingLogIds));
+            await client.delete(logs).where(and(eq(logs.userId, userId), inArray(logs.id, meetingLogIds)));
+        }
+
+        await client.delete(cardMeetings).where(eq(cardMeetings.meetingId, id));
+
+        const [meeting] = await client.delete(meetings)
+            .where(and(eq(meetings.id, id), eq(meetings.userId, userId)))
+            .returning();
+
+        return meeting;
+    });
 }
 
 export async function listMeetings(userId: number, filters: MeetingListFilters = {}) {

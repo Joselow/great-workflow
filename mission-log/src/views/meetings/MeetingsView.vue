@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router'
 
 import MeetingDateFiltersControl from '@/components/Meeting/MeetingDateFilters.vue'
 import MeetingTable from '@/components/Meeting/MeetingTable.vue'
+import { useActionTemplate } from '@/composables/useActionTemplate'
 import { useMeeting } from '@/composables/useMeeting'
+import { templatesForModule } from '@/helpers/actionTemplateText'
 import { deleteFromArray } from '@/utils/array'
 import { endOfMonth } from '@/utils/date'
 import dayjs from 'dayjs'
@@ -15,6 +17,8 @@ const PAGE_LIMIT = 24
 
 const router = useRouter()
 const { getMeetings, deleteMeeting, loading } = useMeeting()
+const { templates, getActionTemplates } = useActionTemplate()
+const meetingTemplates = computed(() => templatesForModule(templates.value, 'meeting'))
 
 const currentMonthFilters = (): MeetingDateFilters => ({
   from: dayjs().startOf('month').format('YYYY-MM-DD'),
@@ -76,6 +80,7 @@ const emptyLabel = computed(() => {
 const showTruncation = computed(() => total.value > items.value.length)
 
 loadMeetings()
+void getActionTemplates()
 </script>
 
 <template>
@@ -118,6 +123,7 @@ loadMeetings()
       <MeetingTable
         :meetings="items"
         :empty-label="emptyLabel"
+        :templates="meetingTemplates"
         @open="openMeeting"
         @delete="handleDelete"
       />

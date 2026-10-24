@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ActionTemplateMenu from '@/components/ActionTemplate/ActionTemplateMenu.vue'
 import ConfirmModal from '@commons/ConfirmModal.vue'
 
 import { logStore } from '@/store/logStore';
@@ -7,13 +8,15 @@ import { textDataStore } from '@/store/textDataStore';
 import { generateLogInfo } from '@/helpers/logInfo';
 import { useShowStates } from '@/composables/useShowStates';
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate';
 import type { Log } from '@/interfaces/Log';
 
-interface Props {
+const props = withDefaults(defineProps<{
   log: Log
-}
-
-const props = defineProps<Props>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const emits = defineEmits<{
   delete: [log: Log]
@@ -54,6 +57,11 @@ const handleConfirmDelete = () => {
     >
       <p class="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer.</p>
     </ConfirmModal>
+
+    <ActionTemplateMenu
+      :templates="templates"
+      :entity="generateLogInfo(log)"
+    />
 
     <button class="cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold text-white dark:text-gray-900 transition-[filter] bg-brand-orange hover:brightness-95 active:brightness-90"
       @click="handleSelect"

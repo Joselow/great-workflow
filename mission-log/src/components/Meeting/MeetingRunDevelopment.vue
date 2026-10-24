@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MeetingRunIssue from '@/components/Meeting/MeetingRunIssue.vue'
 import MeetingRunNotebook from '@/components/Meeting/MeetingRunNotebook.vue'
+import { useAutosizeTextarea } from '@/composables/useAutosizeTextarea'
 import type { Meeting, MeetingIssue } from '@/interfaces/meeting'
 
 defineProps<{
@@ -9,6 +10,7 @@ defineProps<{
 
 const openIssue = defineModel<MeetingIssue | null>('openIssue', { required: true })
 const additionalInfo = defineModel<string>('additionalInfo', { required: true })
+const { bind: bindInfo, onInput: fitInfo } = useAutosizeTextarea(additionalInfo)
 
 const emit = defineEmits<{
   commit: []
@@ -38,9 +40,11 @@ const emit = defineEmits<{
       <label class="block text-sm font-semibold">
         Detalles adicionales
         <textarea
+          :ref="bindInfo"
           v-model="additionalInfo"
           rows="3"
-          class="mt-1 w-full rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+          class="mt-1 w-full resize-none overflow-hidden rounded-md border border-black/10 bg-white/70 px-2 py-1.5 text-sm outline-none dark:border-white/15 dark:bg-white/5"
+          @input="fitInfo"
           @blur="emit('commit')"
         />
       </label>

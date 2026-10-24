@@ -7,15 +7,17 @@ import { logStore } from '@/store/logStore';
 
 import { getPastelPalette } from '@/helpers/pastel';
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate';
 import type { Log } from '@/interfaces/Log';
 
 const { selectLog, selectedLog, clearLog } = logStore
 
-interface Props {
+const props = withDefaults(defineProps<{
   log: Log
-}
-
-const props = defineProps<Props>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const emits = defineEmits<{
   delete: [log: Log]
@@ -70,6 +72,7 @@ const handleSelectLog = (log: Log) => {
 
       <LogItemActions
         :log="log"
+        :templates="templates"
         @delete="emits('delete', $event)"
       />
     </div>

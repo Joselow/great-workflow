@@ -283,7 +283,7 @@ onMounted(async () => {
           />
           <p v-else class="min-w-0 flex-1">{{ requirement.name }}</p>
           <button
-            v-if="addOnRow && canAdd && editingRequirementId !== requirement.id"
+            v-if="addOnRow && canAdd"
             type="button"
             class="inline-flex cursor-pointer rounded-md p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10"
             aria-label="Agregar tarea del requerimiento"
@@ -359,7 +359,7 @@ onMounted(async () => {
             />
             <p v-else class="min-w-0 flex-1">{{ task.name }}</p>
             <button
-              v-if="addOnRow && canAdd && editingTaskId !== task.id"
+              v-if="addOnRow && canAdd"
               type="button"
               class="inline-flex cursor-pointer rounded-md p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10"
               aria-label="Agregar otra tarea"
@@ -490,7 +490,7 @@ onMounted(async () => {
           />
           <p v-else class="min-w-0 flex-1">{{ task.name }}</p>
           <button
-            v-if="addOnRow && canAdd && editingTaskId !== task.id"
+            v-if="addOnRow && canAdd"
             type="button"
             class="inline-flex cursor-pointer rounded-md p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10"
             aria-label="Agregar otra tarea suelta"
@@ -557,14 +557,26 @@ onMounted(async () => {
           <span class="material-symbols-outlined" style="font-size: 1rem;">add</span>
         </button>
       </div>
+      <div
+        v-else-if="canAdd && addOnRow && !looseTasks.length"
+        class="text-end"
+      >
+        <button
+          type="button"
+          class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-black/15 bg-white text-gray-700 transition-colors hover:border-gray-500 hover:bg-gray-50 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-white/10"
+          aria-label="Agregar tarea"
+          @click="openLooseComposer"
+        >
+          <span class="material-symbols-outlined" style="font-size: 1rem;">add</span>
+        </button>
+      </div>
       <button
         v-else-if="canAdd && !looseTasks.length"
         type="button"
-        class="inline-flex cursor-pointer items-center rounded-md border border-black/15 
-        px-2 py-1 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-500 hover:bg-gray-50 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-white/10"
+        class="inline-flex cursor-pointer items-center rounded-md border border-black/15 px-2 py-1 text-xs font-semibold text-gray-700 transition-colors hover:border-gray-500 hover:bg-gray-50 dark:border-white/20 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-white/10"
         @click="openLooseComposer"
       >
-        <span class="material-symbols-outlined mr-1" style="font-size: 1rem;">add </span>
+        <span class="material-symbols-outlined mr-1" style="font-size: 1rem;">add</span>
         Agregar tarea
       </button>
     </div>

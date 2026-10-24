@@ -7,15 +7,19 @@ import TaskList from '@/components/Task/TaskList.vue'
 
 import { useTask } from '@/composables/useTask'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import type { Requirement } from '@/interfaces/requirement'
 import { emptyTaskDraft, type Task, type TaskDraft } from '@/interfaces/task'
 
 const open = defineModel<boolean>({ required: true })
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   requirement: Requirement | null
   projectId: string
-}>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const { loading, tasks, getTasks, createTask, updateTask, patchCompleted, deleteTask } = useTask()
 
@@ -187,6 +191,7 @@ const onDelete = async (task: Task) => {
 
           <TaskList
             :tasks="tasks"
+            :templates="templates"
             :completing-ids="completingIds"
             :pending="loading"
             empty-message="Aún no hay tareas"

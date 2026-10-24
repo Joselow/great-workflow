@@ -6,6 +6,7 @@ import EmptyRecords from '@/commons/EmptyRecords.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import TaskRow from '@/components/Task/TaskRow.vue'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import type { Task } from '@/interfaces/task'
 
 withDefaults(defineProps<{
@@ -13,10 +14,12 @@ withDefaults(defineProps<{
   completingIds?: string[]
   pending?: boolean
   emptyMessage?: string
+  templates?: ActionTemplate[]
 }>(), {
   completingIds: () => [],
   pending: false,
   emptyMessage: 'Aún no hay tareas',
+  templates: () => [],
 })
 
 const emit = defineEmits<{
@@ -68,6 +71,7 @@ const confirmDelete = () => {
             v-for="task in tasks"
             :key="task.id"
             :task="task"
+            :templates="templates"
             :completing="completingIds.includes(task.id)"
             @complete="emit('complete', task)"
             @edit="emit('edit', task)"

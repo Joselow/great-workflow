@@ -9,7 +9,9 @@ import CommonLoader from '@commons/CommonLoader.vue';
 import { logStore } from '@/store/logStore';
 import { projectStore } from '@/store/projectStore';
 
+import { useActionTemplate } from '@/composables/useActionTemplate';
 import { useLog } from '@/composables/useLog';
+import { templatesForModule } from '@/helpers/actionTemplateText';
 import { errorToast } from '@/composables/useAlerts';
 import { deleteFromArray, updateFromArray } from '@/utils/array';
 import {
@@ -24,6 +26,9 @@ import type { Log, LogViewFilters } from '@/interfaces/Log';
 const { selectedLog, clearLog } = logStore
 const { activeProject } = projectStore
 const { loading, getLogs , logs, deleteLog } = useLog()
+const { templates, getActionTemplates } = useActionTemplate()
+const logTemplates = computed(() => templatesForModule(templates.value, 'log'))
+void getActionTemplates()
 
 const createInitialFilters = (): LogViewFilters => {
   const { month, week } = defaultPeriod()
@@ -128,6 +133,7 @@ const handleDeleteLog = async (log: Log) => {
         />
         <LogTable class="mt-4"
           :logs="logs"
+          :templates="logTemplates"
           @delete="handleDeleteLog"
         />
       </div>

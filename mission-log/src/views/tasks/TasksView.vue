@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import CommonLoader from '@/commons/CommonLoader.vue'
 import TaskForm from '@/components/Task/TaskForm.vue'
 import TaskList from '@/components/Task/TaskList.vue'
 
+import { useActionTemplate } from '@/composables/useActionTemplate'
 import { useRequirement } from '@/composables/useRequirement'
 import { useTask } from '@/composables/useTask'
+import { templatesForModule } from '@/helpers/actionTemplateText'
 import { projectStore } from '@/store/projectStore'
 
 import { emptyTaskDraft, type Task, type TaskDraft, type TaskListFilters } from '@/interfaces/task'
 
 type StatusFilter = 'all' | 'pending' | 'done'
 type RequirementFilter = 'all' | 'none' | string
+
+const { templates, getActionTemplates } = useActionTemplate()
+const taskTemplates = computed(() => templatesForModule(templates.value, 'task'))
+void getActionTemplates()
 
 const { activeProject } = projectStore
 const { loading: requirementsLoading, requirements, getRequirements } = useRequirement()
@@ -231,6 +237,7 @@ const filterClass = (active: boolean) => active
 
           <TaskList
             :tasks="tasks"
+            :templates="taskTemplates"
             :completing-ids="completingIds"
             :pending="loading"
             empty-message="Aún no hay tareas"

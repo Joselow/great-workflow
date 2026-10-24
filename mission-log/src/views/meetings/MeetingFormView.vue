@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref, useTemplateRef } from 'vue'
+import { computed, defineAsyncComponent, ref, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import ActionTemplateButton from '@/components/ActionTemplate/ActionTemplateButton.vue'
 import ConfirmModal from '@/commons/ConfirmModal.vue'
 import DangerZone from '@/commons/DangerZone.vue'
 import ProjectSelect from '@/components/Project/ProjectSelect.vue'
@@ -14,7 +15,10 @@ import Loader from '@/commons/Loader.vue'
 
 import { projectStore } from '@/store/projectStore'
 import { useProject } from '@/composables/useProject'
+import { useActionTemplate } from '@/composables/useActionTemplate'
 import { useMeeting } from '@/composables/useMeeting'
+import { applyActionTemplate } from '@/helpers/applyActionTemplate'
+import { templatesForModule } from '@/helpers/actionTemplateText'
 import { useShowStates } from '@/composables/useShowStates'
 import { errorToast, successToast } from '@/composables/useAlerts'
 import { textDataStore } from '@/store/textDataStore'
@@ -23,6 +27,7 @@ import { generateMeetingSummary } from '@/helpers/meetingSummary'
 import { COLOR_ISSUE, DEFAULT_PROJECT_COLOR } from '@/constants/projectColors'
 import { cardSurfaceStyle, isLightHex } from '@/helpers/cardColor'
 
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import { MEETING_PLATFORM_OPTIONS, type Meeting, type MeetingDraft, type MeetingLogLink, type MeetingNextStep, type MeetingQualificationPayload, type MeetingWriteLogLink, type MeetingWritePayload } from '@/interfaces/meeting'
 
 const MeetingQualificationModal = defineAsyncComponent(
@@ -39,6 +44,9 @@ const router = useRouter()
 const { activeProject, projects } = projectStore
 const { ensureProjects } = useProject()
 const { createMeeting, getMeetingById, updateMeeting, qualifyMeeting, deleteMeeting, loading } = useMeeting()
+const { templates, getActionTemplates } = useActionTemplate()
+const meetingTemplates = computed(() => templatesForModule(templates.value, 'meeting'))
+void getActionTemplates()
 const { modalConfirm, onModalConfirm, offModalConfirm } = useShowStates('modalConfirm')
 
 const draft = ref<MeetingDraft | null>(null)
@@ -269,12 +277,11 @@ const focusEditor = (editor: InstanceType<typeof RichTextEditor> | null, event: 
   editor?.focus()
 }
 
-const copyMeetingSummary = async () => {
-  if (!draft.value) return
-
+const currentMeetingSummary = () => {
+  if (!draft.value) return ''
 
   const projectName = projects.value.find((project) => project.id === draft.value?.projectId)?.name ?? ''
-  const text = generateMeetingSummary({
+  return generateMeetingSummary({
     title: draft.value.title,
     projectName,
     date: draft.value.date,
@@ -285,7 +292,12 @@ const copyMeetingSummary = async () => {
     participants: draft.value.participants,
     nextSteps: draft.value.nextSteps,
   })
+}
 
+const copyMeetingSummary = async () => {
+  if (!draft.value) return
+
+  const text = currentMeetingSummary()
   textDataStore.setTextData(text, 'markdown')
 
   try {
@@ -298,6 +310,10 @@ const copyMeetingSummary = async () => {
   }
 
 
+}
+
+const applyMeetingTemplate = (template: ActionTemplate) => {
+  void applyActionTemplate(template, currentMeetingSummary())
 }
 
 const openRun = () => {
@@ -631,6 +647,13 @@ const handleConfirmDelete = async (id: string) => {
             <span class="material-symbols-outlined align-middle">file_copy</span>
             Copiar Resumen 
            </button>
+           <ActionTemplateButton
+            v-for="template in meetingTemplates"
+            :key="template.id"
+            block
+            :template="template"
+            @click="applyMeetingTemplate(template)"
+           />
            <button
             v-if="draft.id"
             type="button"

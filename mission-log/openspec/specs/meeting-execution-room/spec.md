@@ -97,6 +97,23 @@ The issue frame and the close act SHALL show the same additional-info text. Comm
 - **THEN** the close act SHALL show that text
 - **AND** `summary` and `lessons` SHALL be unchanged
 
+### Requirement: Additional info fits its text
+The additional-info field in the issue frame and on the close act SHALL grow and shrink with its text. Empty, it SHALL keep a short minimum height of about three lines. The field MUST NOT use an inner scrollbar while its text is taller than that minimum; the act column scrolls instead. Both places SHALL keep showing the same meeting field.
+
+#### Scenario: Text grows the field
+- **WHEN** the owner types additional info past three lines on the close act
+- **THEN** the field SHALL grow to show that text
+- **AND** SHALL NOT scroll inside the field
+
+#### Scenario: Deleting text shrinks the field
+- **WHEN** the owner deletes text until three lines or fewer remain
+- **THEN** the field SHALL shrink
+- **AND** SHALL keep the minimum height
+
+#### Scenario: The issue frame uses the same fit
+- **WHEN** the owner opens an issue whose additional info is longer than three lines
+- **THEN** the issue frame SHALL show that text at the field's grown height
+
 ### Requirement: Next steps on close stay logs
 The close act SHALL list the meeting's next steps. When the meeting has a project, the owner SHALL be able to add one. When the meeting has no project, the close act MUST NOT offer adding one. A next step SHALL be stored as a log born from the meeting, not as a task. Adding one SHALL keep the next steps already stored.
 

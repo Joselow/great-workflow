@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+import ActionTemplateMenu from '@/components/ActionTemplate/ActionTemplateMenu.vue'
 import ButtonTone from '@/commons/ButtonTone.vue'
 
+import { taskEntityContent } from '@/helpers/taskContent'
+import type { ActionTemplate } from '@/interfaces/actionTemplate'
 import type { Task } from '@/interfaces/task'
 import { textDataStore } from '@/store/textDataStore';
 
-defineProps<{
+withDefaults(defineProps<{
   task: Task
   completing: boolean
-}>()
+  templates?: ActionTemplate[]
+}>(), {
+  templates: () => [],
+})
 
 const emit = defineEmits<{
   complete: []
@@ -20,14 +26,13 @@ const emit = defineEmits<{
 
 const showDescription = ref(false)
 
-const handleViewDescription = ( task: Task ) => {  
-  if (task.description.trim()) {
-    const text = `*${task.name}*\n\n${task.description}
-    `
-    textDataStore.setTextData(text, 'markdown')
-  } else {
+const handleViewDescription = (task: Task) => {
+  if (!task.description.trim()) {
     textDataStore.setTextData('', 'markdown')
+    return
   }
+
+  textDataStore.setTextData(taskEntityContent(task), 'markdown')
 }
 
 </script>
@@ -101,6 +106,11 @@ const handleViewDescription = ( task: Task ) => {
             style="font-size: 19px;"
           >article</span>
         </button>
+        <ActionTemplateMenu
+          :templates="templates"
+          :entity="taskEntityContent(task)"
+        />
+
         <button
           type="button"
           class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-black/10 px-2 py-1 text-gray-600 dark:border-white/15 dark:text-gray-200"

@@ -54,8 +54,10 @@ The API SHALL create a meeting for the authenticated user with `title`, `date`, 
 #### Scenario: Owner deletes a meeting
 - **WHEN** the owner deletes their meeting
 - **THEN** the API SHALL remove the meeting
-- **AND** SHALL remove its `card_meetings` and `log_meetings` rows
-- **AND** SHALL NOT delete the cards or logs themselves
+- **AND** SHALL remove its issues, its requirements, and its tasks
+- **AND** SHALL remove its `card_meetings` rows and its `log_meetings` rows
+- **AND** SHALL remove a linked log only when that link's `source` is `meeting`
+- **AND** SHALL NOT delete the cards themselves
 
 ### Requirement: Replace card and log links on write
 Create and update MUST accept `cardIds` and `logLinks`. The service MUST replace the meeting's join rows with that set. Each card and log MUST belong to the same user. Duplicate pairs MUST NOT be inserted. For an existing `log_meetings` pair, the original `source` MUST be kept.
@@ -98,25 +100,51 @@ The cards table MUST NOT have `meeting_id`. Card create, get, update, list, and 
 - **WHEN** the owner has no meetings matching the filters
 - **THEN** the API SHALL return an empty `items` array and a total of 0
 
-### Requirement: Deleting a meeting detaches requirements and tasks
-When the owner successfully deletes a meeting, the API SHALL set the meeting id to null on every requirement and every task that pointed at that meeting. It MUST NOT delete those requirements or tasks. Their project id MUST stay as stored. A task's requirement id MUST stay as stored. Requirements and tasks that pointed at a different meeting MUST be unchanged. A delete that responds with `404` MUST NOT change any requirement or task. This cleanup MUST NOT change the existing removal of the meeting, of its card links, and of its log links, and MUST NOT delete the cards or logs themselves.
+### Requirement: Deleting a meeting removes its associated work
+When the owner deletes a meeting, the same request SHALL remove that meeting's issues, the requirements whose meeting id is that meeting, the tasks of those requirements, and the tasks whose meeting id is that meeting. It SHALL remove the meeting's `card_meetings` rows and MUST NOT delete the card rows. For each `log_meetings` row of this meeting whose `source` is `log`, it SHALL remove only that pivot row and MUST leave the log row and that log's links to other meetings. For each `log_meetings` row of this meeting whose `source` is `meeting`, it SHALL remove that log and every `log_meetings` row of that log, including a link from the same log to another meeting. Requirements, tasks, logs, and issues that are not associated with this meeting MUST stay. A missing or foreign meeting MUST be `404` and MUST NOT delete any of those rows. If the delete fails before it finishes, the meeting and every associated row SHALL stay as they were.
 
-#### Scenario: Rows stay and lose the meeting
-- **WHEN** the owner deletes a meeting that one requirement and one task point at
-- **THEN** the meeting SHALL be removed
-- **AND** that requirement and that task SHALL still exist
-- **AND** their meeting id SHALL be null
-- **AND** their project id SHALL be unchanged
-- **AND** the task's requirement id SHALL be unchanged
+#### Scenario: Associated rows are removed
+- **WHEN** the owner deletes a meeting that has an issue, a requirement, a task of that requirement, a task of the meeting, a log linked with `source` `meeting`, and a linked card
+- **THEN** the meeting, the issue, the requirement, both tasks, and that log SHALL be gone
+- **AND** the card SHALL still exist
+- **AND** the meeting SHALL have no remaining `card_meetings` or `log_meetings` rows
+
+#### Scenario: An independent log keeps its row
+- **WHEN** the owner deletes a meeting whose link to a log has `source` `log`
+- **THEN** that pivot row SHALL be gone
+- **AND** the log SHALL still exist
+
+#### Scenario: An independent log stays on another meeting
+- **WHEN** the owner deletes a meeting whose `source` `log` link points at a log that is also linked to a second meeting
+- **THEN** the log SHALL still exist
+- **AND** the second meeting SHALL still list that log
+
+#### Scenario: A meeting-born log linked elsewhere is removed
+- **WHEN** the owner deletes a meeting whose `source` `meeting` link points at a log that is also linked to a second meeting
+- **THEN** that log SHALL be gone
+- **AND** the second meeting SHALL no longer list that log
+- **AND** the second meeting SHALL still exist
 
 #### Scenario: Another meeting is left alone
 - **WHEN** the owner deletes one meeting
-- **THEN** a requirement that points at a different meeting SHALL keep that meeting id
+- **THEN** a requirement, a task, a log, and an issue of a different meeting SHALL stay
 
 #### Scenario: Foreign id changes nothing
 - **WHEN** an authenticated user deletes a meeting id they do not own
 - **THEN** the API SHALL respond with `404`
-- **AND** no requirement or task SHALL change its meeting id
+- **AND** that meeting and its associated rows SHALL stay
+
+#### Scenario: A failed delete leaves the meeting
+- **WHEN** the delete fails after it has started removing associated rows
+- **THEN** the meeting SHALL still exist
+- **AND** its issues, requirements, tasks, logs, and links SHALL stay as they were
+
+### Requirement: Finish is atomic
+The finish action SHALL apply its clock update as one unit. If the finish fails before it completes, `duration`, `runningSince`, `finishedAt`, and `executed` SHALL stay as they were. A successful finish SHALL keep the existing finish rules.
+
+#### Scenario: A failed finish does not store a partial clock
+- **WHEN** the owner finishes a running meeting and the finish fails before it completes
+- **THEN** `duration`, `runningSince`, `finishedAt`, and `executed` SHALL stay as they were
 
 ### Requirement: Saving a meeting does not rewrite requirements or tasks
 Create and update of a meeting MUST NOT create, delete, or rewrite requirements or tasks. Changing a meeting's project id MUST NOT change the project id already stored on a requirement or a task.
